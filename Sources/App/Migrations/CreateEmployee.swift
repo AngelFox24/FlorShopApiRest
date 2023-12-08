@@ -1,8 +1,21 @@
-//
-//  File.swift
-//  
-//
-//  Created by Angel Curi Laurente on 7/12/23.
-//
+import Fluent
 
-import Foundation
+struct CreateEmployee: Migration {
+    func prepare(on database: Database) -> EventLoopFuture<Void> {
+        return database.schema("employees")
+            .id()
+            .field("user", .string, .required)
+            .field("name", .string, .required)
+            .field("lastName", .string, .required)
+            .field("email", .string, .required)
+            .field("phoneNumber", .string, .required)
+            .field("role", .string, .required)
+            .field("active", .bool, .required)
+            .field("subsidiary_id", .uuid, .references("subsidiaries", "id"))
+            .create()
+    }
+    
+    func revert(on database: Database) -> EventLoopFuture<Void> {
+        return database.schema("employees").delete()
+    }
+}

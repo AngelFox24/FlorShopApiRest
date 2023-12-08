@@ -1,16 +1,17 @@
 import Fluent
 
 struct CreateCompany: Migration {
-    func prepare(on database: Database) throws {
-        try database.schema("companies")
+    func prepare(on database: Database) -> EventLoopFuture<Void> {
+        return database.schema("companies")
             .id()
-            .field("companyName", .string)
-            .field("ruc", .string)
+            .field("companyName", .string, .required)
+            .field("ruc", .string, .required)
             .create()
     }
 
-    func revert(on database: Database) throws {
-        try database.schema("companies").delete()
+    func revert(on database: Database) -> EventLoopFuture<Void> {
+        return database.schema("companies").delete()
     }
 }
+
 

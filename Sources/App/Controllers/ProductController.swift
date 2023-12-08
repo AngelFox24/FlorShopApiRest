@@ -1,16 +1,16 @@
 import Fluent
 import Vapor
 
-struct TodoController: RouteCollection {
+struct ProductController: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
-        let song = routes.grouped("songs")
+        let song = routes.grouped("products")
         song.get(use: index)
         //song.post(use: create)
     }
     
     //func index(req: Request) throws -> EventLoopFuture<[Song]> {
-    func index(req: Request) throws -> EventLoopFuture<String> {
-        return "HOla"
+    func index(req: Request) throws -> EventLoopFuture<[Product]> {
+        return Product.query(on: req.db).all()
         //return Song.query(on: req.db).all()
     }
     /*
