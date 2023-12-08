@@ -13,7 +13,7 @@ public func configure(_ app: Application) async throws {
         port: Environment.get("DATABASE_PORT").flatMap(Int.init(_:)) ?? SQLPostgresConfiguration.ianaPortNumber,
         username: Environment.get("DATABASE_USERNAME") ?? "vapor_username",
         password: Environment.get("DATABASE_PASSWORD") ?? "vapor_password",
-        database: Environment.get("DATABASE_NAME") ?? "vapor_database",
+        database: Environment.get("DATABASE_NAME") ?? "FlorCloudBDv1",
         tls: .prefer(try .init(configuration: .clientDefault)))
     ), as: .psql)
 

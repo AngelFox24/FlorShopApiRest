@@ -17,23 +17,6 @@ final class ImageUrl: Model, Content {
     @Field(key: "imageUrl")
     var imageUrl: String
     
-    // Relación uno a muchos: un autor puede tener varios libros
-    
-    @OptionalParent(key: "toImageUrl")
-    var toProduct: Product?
-    
-    @OptionalParent(key: "toImageUrl")
-    var toCustomer: Customer?
-    
-    @OptionalParent(key: "toImageUrl")
-    var toEmployee: Employee?
-    
-    @OptionalParent(key: "toImageUrl")
-    var toSaleDetail: SaleDetail?
-    
-    @OptionalParent(key: "toImageUrl")
-    var toSubsidiary: Subsidiary?
-    
     init() { }
     
     init(id: UUID? = nil, imageUrl: String) {

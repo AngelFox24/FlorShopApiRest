@@ -31,18 +31,19 @@ final class Customer: Model, Content {
     
     
     //MARK: Relationship
-    @Parent(key: "toCustomer")
-    var toCompany: Company
+    @Parent(key: "company_id")
+    var company: Company
     
-    @OptionalChild(for: \.$toCustomer)
-    var toImageUrl: ImageUrl?
+    //Imagen se debe pedir en el JSON
+    @OptionalParent(key: "imageUrl")
+    var imageUrl: ImageUrl?
     
     @Children(for: \.$toCustomer)
     var toSales: [Sale]
     
     init() { }
     
-    init(id: UUID? = nil, name: String, lastName: String, totalDebt: Double, dateLimit: Date, phoneNumber: String, creditLimit: Double, active: Bool, toImageUrlID: UUID? = nil) {
+    init(id: UUID? = nil, name: String, lastName: String, totalDebt: Double, dateLimit: Date, phoneNumber: String, creditLimit: Double, active: Bool, company: Company, imageUrl: ImageUrl? = nil) {
         self.id = id
         self.name = name
         self.lastName = lastName
@@ -51,6 +52,7 @@ final class Customer: Model, Content {
         self.phoneNumber = phoneNumber
         self.creditLimit = creditLimit
         self.active = active
-        self.toImageUrl?.id = toImageUrlID
+        self.company = company
+        self.imageUrl = imageUrl
     }
 }

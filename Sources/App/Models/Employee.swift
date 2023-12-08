@@ -30,18 +30,16 @@ final class Employee: Model, Content {
     var active: Bool
     
     //MARK: Relationship
-    @Parent(key: "toEmployee")
-    var toSubsidiary: Subsidiary
+    @Parent(key: "subsidiary_id")
+    var subsidiary_id: UUID?
     
-    @OptionalChild(for: \.$toEmployee)
-    var toImageUrl: ImageUrl?
-    
-    @Children(for: \.$toEmployee)
-    var toSale: [Sale]
+    //Imagen se debe pedir en el JSON
+    @OptionalParent(key: "imageUrl")
+    var imageUrl: ImageUrl?
     
     init() { }
     
-    init(id: UUID? = nil, user: String, name: String, lastName: String, email: String, phoneNumber: String, role: String, active: Bool, toImageUrlID: UUID? = nil) {
+    init(id: UUID? = nil, user: String, name: String, lastName: String, email: String, phoneNumber: String, role: String, active: Bool, subsidiary_id: UUID? = nil, imageUrl: ImageUrl? = nil) {
         self.id = id
         self.user = user
         self.name = name
@@ -50,6 +48,7 @@ final class Employee: Model, Content {
         self.phoneNumber = phoneNumber
         self.role = role
         self.active = active
-        self.toImageUrl?.id = toImageUrlID
+        self.subsidiary_id = subsidiary_id
+        self.imageUrl = imageUrl
     }
 }

@@ -24,13 +24,13 @@ final class Sale: Model, Content {
     var total: Double
     
     //MARK: Relationship
-    @Parent(key: "toSale")
+    @Parent(key: "customer_id")
     var toCustomer: Customer
     
-    @Parent(key: "toSale")
+    @Parent(key: "employee_id")
     var toEmployee: Employee
     
-    @Parent(key: "toSale")
+    @Parent(key: "subsidiary_id")
     var toSubsidiary: Subsidiary
     
     @Children(for: \.$toSale)

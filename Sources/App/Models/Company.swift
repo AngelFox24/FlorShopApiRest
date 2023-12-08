@@ -16,15 +16,11 @@ final class Company: Model, Content {
     
     @Field(key: "companyName")
     var companyName: String
+    
     @Field(key: "ruc")
     var ruc: String
     
     //MARK: Relationship
-    @Children(for: \.$toCompany)
-    var toCustomer: [Customer]
-    
-    @Children(for: \.$toCompany)
-    var toSubsidiarie: [Subsidiary]
     
     init() { }
     

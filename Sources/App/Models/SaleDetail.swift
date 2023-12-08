@@ -27,11 +27,12 @@ final class SaleDetail: Model, Content {
     
     
     //MARK: Relationship
-    @Parent(key: "toSaleDetail")
+    @Parent(key: "sale_id")
     var toSale: Sale
     
-    @OptionalChild(for: \.$toSaleDetail)
-    var toImageUrl: ImageUrl?
+    //Imagen se debe pedir en el JSON
+    @OptionalParent(key: "imageUrl")
+    var imageUrl: ImageUrl?
     
     init() { }
     

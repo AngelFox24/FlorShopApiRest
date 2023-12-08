@@ -20,16 +20,17 @@ final class Product: Model, Content {
     @Field(key: "unitPrice")
     var unitPrice: Double
     
-    // Relación uno a muchos: un autor puede tener varios libros
-    @Parent(key: "toProduct")
-    var toSubsidiary: Subsidiary
+    //MARK: Relationships
+    @Parent(key: "subsidiary_id")
+    var subsidiary: Subsidiary
     
-    @OptionalChild(for: \.$toProduct)
-    var toImageUrl: ImageUrl?
+    //Imagen se debe pedir en el JSON
+    @OptionalParent(key: "imageUrl_id")
+    var imageUrl: ImageUrl?
     
     init() { }
     
-    init(id: UUID? = nil, productName: String, active: Bool, expirationDate: Date? = nil, quantityStock: Int, unitCost: Double, unitPrice: Double, toImageUrlID: UUID? = nil) {
+    init(id: UUID? = nil, productName: String, active: Bool, expirationDate: Date? = nil, quantityStock: Int, unitCost: Double, unitPrice: Double, subsidiary: Subsidiary, imageUrl: ImageUrl? = nil) {
         self.id = id
         self.productName = productName
         self.active = active
@@ -37,6 +38,7 @@ final class Product: Model, Content {
         self.quantityStock = quantityStock
         self.unitCost = unitCost
         self.unitPrice = unitPrice
-        self.toImageUrl?.id = toImageUrlID
+        self.subsidiary = subsidiary
+        self.imageUrl = imageUrl
     }
 }

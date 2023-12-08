@@ -19,26 +19,18 @@ final class Subsidiary: Model, Content {
     var name: String
     
     //MARK: Relationship
-    @Parent(key: "company_id")
-    var toCompany: Company
+    @OptionalParent(key: "company_id")
+    var companyId: UUID?
     
-    @Children(for: \.$toSubsidiary)
-    var toEmployee: [Employee]
-    
-    @OptionalChild(for: \.$toSubsidiary)
-    var toImageUrl: ImageUrl?
-    
-    @Children(for: \.$toSubsidiary)
-    var toProduct: [Product]
-    
-    @Children(for: \.$toSubsidiary)
-    var toSale: [Sale]
+    @OptionalParent(key: "imageUrl_id")
+    var imageUrl: ImageUrl?
     
     init() { }
     
-    init(id: UUID? = nil, name: String, toImageUrlID: UUID? = nil) {
+    init(id: UUID? = nil, name: String, companyId: UUID? = nil, imageUrl: ImageUrl? = nil) {
         self.id = id
         self.name = name
-        self.toImageUrl?.id = toImageUrlID
+        self.companyId = companyId
+        self.imageUrl = imageUrl
     }
 }
