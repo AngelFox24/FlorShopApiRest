@@ -5,7 +5,7 @@ struct CreateCompany: Migration {
         return database.schema("companies")
             .id()
             .field("companyName", .string, .required)
-            .field("ruc", .string, .required)
+            .field("ruc", .string)
             .create()
     }
 

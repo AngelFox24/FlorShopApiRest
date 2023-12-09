@@ -17,6 +17,22 @@ final class ImageUrl: Model, Content {
     @Field(key: "imageUrl")
     var imageUrl: String
     
+    //MARK: Relationship
+    @Children(for: \.$imageUrl)
+    var toSubsidiary: [Subsidiary]
+    
+    @Children(for: \.$imageUrl)
+    var toSaleDetail: [SaleDetail]
+    
+    @Children(for: \.$imageUrl)
+    var toCustomer: [Customer]
+    
+    @Children(for: \.$imageUrl)
+    var toEmployee: [Employee]
+    
+    @Children(for: \.$imageUrl)
+    var toProduct: [Product]
+    
     init() { }
     
     init(id: UUID? = nil, imageUrl: String) {

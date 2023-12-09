@@ -9,8 +9,8 @@ struct CreateSale: Migration {
             .field("saleDate", .date, .required)
             .field("total", .double, .required)
             .field("customer_id", .uuid, .references("customers", "id"))
-            .field("employee_id", .uuid, .references("employees", "id"))
-            .field("subsidiary_id", .uuid, .references("subsidiaries", "id"))
+            .field("employee_id", .uuid, .required, .references("employees", "id"))
+            .field("subsidiary_id", .uuid, .required, .references("subsidiaries", "id"))
             .create()
     }
 

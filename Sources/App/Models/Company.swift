@@ -21,6 +21,8 @@ final class Company: Model, Content {
     var ruc: String
     
     //MARK: Relationship
+    @Children(for: \.$company)
+    var toSubsidiary: [Subsidiary]
     
     init() { }
     

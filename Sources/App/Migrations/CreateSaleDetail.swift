@@ -9,7 +9,8 @@ struct CreateSaleDetail: Migration {
             .field("subtotal", .double, .required)
             .field("unitCost", .double, .required)
             .field("unitPrice", .double, .required)
-            .field("sale_id", .uuid, .references("sales", "id"))
+            .field("sale_id", .uuid, .required, .references("sales", "id"))
+            .field("imageUrl_id", .uuid, .references("imageUrls", "id"))
             .create()
     }
 

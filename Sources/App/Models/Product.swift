@@ -30,7 +30,7 @@ final class Product: Model, Content {
     
     init() { }
     
-    init(id: UUID? = nil, productName: String, active: Bool, expirationDate: Date? = nil, quantityStock: Int, unitCost: Double, unitPrice: Double, subsidiary: Subsidiary, imageUrl: ImageUrl? = nil) {
+    init(id: UUID? = nil, productName: String, active: Bool, expirationDate: Date? = nil, quantityStock: Int, unitCost: Double, unitPrice: Double, subsidiaryID: Subsidiary.IDValue, imageUrlID: ImageUrl.IDValue?) {
         self.id = id
         self.productName = productName
         self.active = active
@@ -38,7 +38,7 @@ final class Product: Model, Content {
         self.quantityStock = quantityStock
         self.unitCost = unitCost
         self.unitPrice = unitPrice
-        self.subsidiary = subsidiary
-        self.imageUrl = imageUrl
+        self.$subsidiary.id = subsidiaryID
+        self.$imageUrl.id = imageUrlID
     }
 }

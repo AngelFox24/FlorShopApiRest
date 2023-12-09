@@ -5,7 +5,8 @@ struct CreateSubsidiary: Migration {
         return database.schema("subsidiaries")
             .id()
             .field("name", .string, .required)
-            .field("company_id", .uuid, .references("companies", "id"))
+            .field("company_id", .uuid, .required, .references("companies", "id"))
+            .field("imageUrl_id", .uuid, .references("imageUrls", "id"))
             .create()
     }
 

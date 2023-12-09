@@ -11,7 +11,8 @@ struct CreateEmployee: Migration {
             .field("phoneNumber", .string, .required)
             .field("role", .string, .required)
             .field("active", .bool, .required)
-            .field("subsidiary_id", .uuid, .references("subsidiaries", "id"))
+            .field("subsidiary_id", .uuid, .required, .references("subsidiaries", "id"))
+            .field("imageUrl_id", .uuid, .references("imageUrls", "id"))
             .create()
     }
     

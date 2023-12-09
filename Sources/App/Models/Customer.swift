@@ -20,7 +20,7 @@ final class Customer: Model, Content {
     var lastName: String
     @Field(key: "totalDebt")
     var totalDebt: Double
-    @Field(key: "email")
+    @Field(key: "dateLimit")
     var dateLimit: Date
     @Field(key: "phoneNumber")
     var phoneNumber: String
@@ -35,15 +35,15 @@ final class Customer: Model, Content {
     var company: Company
     
     //Imagen se debe pedir en el JSON
-    @OptionalParent(key: "imageUrl")
+    @OptionalParent(key: "imageUrl_id")
     var imageUrl: ImageUrl?
     
-    @Children(for: \.$toCustomer)
-    var toSales: [Sale]
+    @Children(for: \.$customer)
+    var toSale: [Sale]
     
     init() { }
     
-    init(id: UUID? = nil, name: String, lastName: String, totalDebt: Double, dateLimit: Date, phoneNumber: String, creditLimit: Double, active: Bool, company: Company, imageUrl: ImageUrl? = nil) {
+    init(id: UUID? = nil, name: String, lastName: String, totalDebt: Double, dateLimit: Date, phoneNumber: String, creditLimit: Double, active: Bool, companyID: Company.IDValue, imageUrlID: ImageUrl.IDValue?) {
         self.id = id
         self.name = name
         self.lastName = lastName
@@ -52,7 +52,7 @@ final class Customer: Model, Content {
         self.phoneNumber = phoneNumber
         self.creditLimit = creditLimit
         self.active = active
-        self.company = company
-        self.imageUrl = imageUrl
+        self.$company.id = companyID
+        self.$imageUrl.id = imageUrlID
     }
 }

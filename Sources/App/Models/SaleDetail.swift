@@ -25,24 +25,24 @@ final class SaleDetail: Model, Content {
     @Field(key: "unitPrice")
     var unitPrice: Double    
     
-    
     //MARK: Relationship
     @Parent(key: "sale_id")
-    var toSale: Sale
+    var sale: Sale
     
     //Imagen se debe pedir en el JSON
-    @OptionalParent(key: "imageUrl")
+    @OptionalParent(key: "imageUrl_id")
     var imageUrl: ImageUrl?
     
     init() { }
     
-    init(id: UUID? = nil, productName: String, quantitySold: Int, subtotal: Double, unitCost: Double, unitPrice: Double, toImageUrlID: UUID? = nil) {
+    init(id: UUID? = nil, productName: String, quantitySold: Int, subtotal: Double, unitCost: Double, unitPrice: Double, saleID: Sale.IDValue, imageUrlID: ImageUrl.IDValue?) {
         self.id = id
         self.productName = productName
         self.quantitySold = quantitySold
         self.subtotal = subtotal
         self.unitCost = unitCost
         self.unitPrice = unitPrice
-        self.toImageUrl?.id = toImageUrlID
+        self.$sale.id = saleID
+        self.$imageUrl.id = imageUrlID
     }
 }

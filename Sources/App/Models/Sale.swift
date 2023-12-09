@@ -24,28 +24,28 @@ final class Sale: Model, Content {
     var total: Double
     
     //MARK: Relationship
+    @Parent(key: "subsidiary_id")
+    var subsidiary: Subsidiary
+    
     @Parent(key: "customer_id")
-    var toCustomer: Customer
+    var customer: Customer
     
     @Parent(key: "employee_id")
-    var toEmployee: Employee
+    var employee: Employee
     
-    @Parent(key: "subsidiary_id")
-    var toSubsidiary: Subsidiary
-    
-    @Children(for: \.$toSale)
+    @Children(for: \.$sale)
     var toSaleDetail: [SaleDetail]
     
     init() { }
     
-    init(id: UUID? = nil, paid: Bool, paymentType: String, saleDate: Date, total: Double, toCustomer: Customer, toEmployee: Employee, toSubsidiary: Subsidiary) {
+    init(id: UUID? = nil, paid: Bool, paymentType: String, saleDate: Date, total: Double, subsidiaryID: Subsidiary.IDValue, customerID: Customer.IDValue, employeeID: Employee.IDValue) {
         self.id = id
         self.paid = paid
         self.paymentType = paymentType
         self.saleDate = saleDate
         self.total = total
-        self.$toCustomer.id = try! toCustomer.requireID()
-        self.$toEmployee.id = try! toEmployee.requireID()
-        self.$toSubsidiary.id = try! toSubsidiary.requireID()
+        self.$subsidiary.id = subsidiaryID
+        self.$customer.id = customerID
+        self.$employee.id = employeeID
     }
 }

@@ -19,18 +19,18 @@ final class Subsidiary: Model, Content {
     var name: String
     
     //MARK: Relationship
-    @OptionalParent(key: "company_id")
-    var companyId: UUID?
+    @Parent(key: "company_id")
+    var company: Company
     
     @OptionalParent(key: "imageUrl_id")
     var imageUrl: ImageUrl?
     
     init() { }
     
-    init(id: UUID? = nil, name: String, companyId: UUID? = nil, imageUrl: ImageUrl? = nil) {
+    init(id: UUID? = nil, name: String, companyID: Company.IDValue, imageUrlID: ImageUrl.IDValue?) {
         self.id = id
         self.name = name
-        self.companyId = companyId
-        self.imageUrl = imageUrl
+        self.$company.id = companyID
+        self.$imageUrl.id = imageUrlID
     }
 }

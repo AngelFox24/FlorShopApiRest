@@ -11,6 +11,7 @@ func routes(_ app: Application) throws {
     }
 
     try app.register(collection: CompanyController())
+    try app.register(collection: ImageUrlController())
     try app.register(collection: SubsidiaryController())
     try app.register(collection: ProductController())
 }

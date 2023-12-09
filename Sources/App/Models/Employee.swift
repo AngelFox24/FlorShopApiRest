@@ -9,6 +9,7 @@ import Fluent
 import Vapor
 
 final class Employee: Model, Content {
+    
     static let schema = "employees"
     
     @ID(key: .id)
@@ -31,15 +32,18 @@ final class Employee: Model, Content {
     
     //MARK: Relationship
     @Parent(key: "subsidiary_id")
-    var subsidiary_id: UUID?
+    var subsidiary: Subsidiary
     
     //Imagen se debe pedir en el JSON
-    @OptionalParent(key: "imageUrl")
+    @OptionalParent(key: "imageUrl_id")
     var imageUrl: ImageUrl?
+    
+    @Children(for: \.$employee)
+    var toSale: [Sale]
     
     init() { }
     
-    init(id: UUID? = nil, user: String, name: String, lastName: String, email: String, phoneNumber: String, role: String, active: Bool, subsidiary_id: UUID? = nil, imageUrl: ImageUrl? = nil) {
+    init(id: UUID? = nil, user: String, name: String, lastName: String, email: String, phoneNumber: String, role: String, active: Bool, subsidiaryID: Subsidiary.IDValue, imageUrlID: ImageUrl.IDValue?) {
         self.id = id
         self.user = user
         self.name = name
@@ -48,7 +52,7 @@ final class Employee: Model, Content {
         self.phoneNumber = phoneNumber
         self.role = role
         self.active = active
-        self.subsidiary_id = subsidiary_id
-        self.imageUrl = imageUrl
+        self.$subsidiary.id = subsidiaryID
+        self.$imageUrl.id = imageUrlID
     }
 }

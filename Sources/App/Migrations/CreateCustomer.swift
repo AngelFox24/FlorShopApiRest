@@ -11,7 +11,8 @@ struct CreateCustomer: Migration {
             .field("phoneNumber", .string, .required)
             .field("creditLimit", .double, .required)
             .field("active", .bool, .required)
-            .field("company_id", .uuid, .references("companies", "id"))
+            .field("company_id", .uuid, .required, .references("companies", "id"))
+            .field("imageUrl_id", .uuid, .references("imageUrls", "id"))
             .create()
     }
     

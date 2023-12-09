@@ -10,7 +10,8 @@ struct CreateProduct: Migration {
             .field("quantityStock", .int, .required)
             .field("unitCost", .double, .required)
             .field("unitPrice", .double, .required)
-            .field("subsidiary_id", .uuid, .references("subsidiaries", "id"))
+            .field("subsidiary_id", .uuid, .required, .references("subsidiaries", "id"))
+            .field("imageUrl_id", .uuid, .references("imageUrls", "id"))
             .create()
     }
 
