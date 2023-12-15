@@ -27,8 +27,8 @@ final class Sale: Model, Content {
     @Parent(key: "subsidiary_id")
     var subsidiary: Subsidiary
     
-    @Parent(key: "customer_id")
-    var customer: Customer
+    @OptionalParent(key: "customer_id")
+    var customer: Customer?
     
     @Parent(key: "employee_id")
     var employee: Employee
@@ -38,7 +38,7 @@ final class Sale: Model, Content {
     
     init() { }
     
-    init(id: UUID? = nil, paid: Bool, paymentType: String, saleDate: Date, total: Double, subsidiaryID: Subsidiary.IDValue, customerID: Customer.IDValue, employeeID: Employee.IDValue) {
+    init(id: UUID? = nil, paid: Bool, paymentType: String, saleDate: Date, total: Double, subsidiaryID: Subsidiary.IDValue, customerID: Customer.IDValue?, employeeID: Employee.IDValue) {
         self.id = id
         self.paid = paid
         self.paymentType = paymentType
