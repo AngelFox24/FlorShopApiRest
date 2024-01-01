@@ -23,9 +23,13 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(CreateCustomer())
     app.migrations.add(CreateProduct())
     app.migrations.add(CreateEmployee())
+    print("Migrate")
     app.migrations.add(CreateSale())
     app.migrations.add(CreateSaleDetail())
-    try await app.autoMigrate().get()
+    //No espera a que la migracion se haga
+    //try await app.autoMigrate().get()
+    //Espera a que la migracion se haga
+    try app.autoMigrate().wait()
     // register routes
     try routes(app)
 }

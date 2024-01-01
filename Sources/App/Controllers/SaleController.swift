@@ -12,11 +12,40 @@ struct SaleController: RouteCollection {
         return Sale.query(on: req.db).all()
     }
     func create(req: Request) throws -> EventLoopFuture<HTTPStatus> {
-        let sale = try req.content.decode(Sale.self)
-        guard sale.id != nil else {
-            let error = Abort(.badRequest, reason: "Se debe proporcionar el Id al registro")
+        let saleDTO = try req.content.decode(SaleDTO.self)
+        let sale = Sale(id: saleDTO.id, paid: saleDTO.paid, paymentType: saleDTO.paymentType, saleDate: saleDTO.saleDate, total: saleDTO.total, subsidiaryID: saleDTO.subsidiaryId, customerID: saleDTO.customerId, employeeID: saleDTO.employeeId)
+        return sale.save(on: req.db).flatMap {
+            return req.eventLoop.flatten(
+                saleDTO.saleDetail.map { saleDetailDTO in
+                    let saleDetail = SaleDetail(id: saleDetailDTO.id, productName: saleDetailDTO.productName, quantitySold: saleDetailDTO.quantitySold, subtotal: saleDetailDTO.subtotal, unitCost: saleDetailDTO.unitCost, unitPrice: saleDetailDTO.unitPrice, saleID: saleDTO.id, imageUrlID: saleDetailDTO.imageUrlId)
+                    return saleDetail.save(on: req.db)
+                }
+            ).transform(to: .ok)
+        }.flatMapError { error in
+            // Manejar el error aquí según tus necesidades.
             return req.eventLoop.makeFailedFuture(error)
         }
-        return sale.save(on: req.db).transform(to: .ok)
     }
+}
+
+struct SaleDTO: Content {
+    let id: UUID
+    let paid: Bool
+    let paymentType: String
+    let saleDate: Date
+    let total: Double
+    let subsidiaryId: UUID
+    let customerId: UUID?
+    let employeeId: UUID
+    let saleDetail: [SaleDetailDTO]
+}
+
+struct SaleDetailDTO: Content {
+    let id: UUID
+    let productName: String
+    let quantitySold: Int
+    let subtotal: Double
+    let unitCost: Double
+    let unitPrice: Double
+    let imageUrlId: UUID
 }

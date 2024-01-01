@@ -23,7 +23,10 @@ final class SaleDetail: Model, Content {
     @Field(key: "unitCost")
     var unitCost: Double
     @Field(key: "unitPrice")
-    var unitPrice: Double    
+    var unitPrice: Double
+    
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
     
     //MARK: Relationship
     @Parent(key: "sale_id")

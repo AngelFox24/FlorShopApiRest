@@ -23,6 +23,9 @@ final class Sale: Model, Content {
     @Field(key: "total")
     var total: Double
     
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+    
     //MARK: Relationship
     @Parent(key: "subsidiary_id")
     var subsidiary: Subsidiary
