@@ -7,6 +7,8 @@ struct CreateSubsidiary: Migration {
             .field("name", .string, .required)
             .field("company_id", .uuid, .required, .references("companies", "id"))
             .field("imageUrl_id", .uuid, .references("imageUrls", "id"))
+            .field("created_at", .datetime)
+            .field("updated_at", .datetime)
             .create()
     }
 
