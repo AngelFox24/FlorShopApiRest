@@ -12,6 +12,7 @@ struct CreateSaleDetail: Migration {
             .field("sale_id", .uuid, .required, .references("sales", "id"))
             .field("imageUrl_id", .uuid, .references("imageUrls", "id"))
             .field("created_at", .datetime)
+            .field("updated_at", .datetime)
             .create()
     }
 

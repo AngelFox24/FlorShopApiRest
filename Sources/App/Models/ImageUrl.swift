@@ -17,6 +17,11 @@ final class ImageUrl: Model, Content {
     @Field(key: "imageUrl")
     var imageUrl: String
     
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+    @Timestamp(key: "updated_at", on: .update)
+    var updatedAt: Date?
+    
     //MARK: Relationship
     @Children(for: \.$imageUrl)
     var toSubsidiary: [Subsidiary]

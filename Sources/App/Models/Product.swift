@@ -20,6 +20,11 @@ final class Product: Model, Content {
     @Field(key: "unitPrice")
     var unitPrice: Double
     
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+    @Timestamp(key: "updated_at", on: .update)
+    var updatedAt: Date?
+    
     //MARK: Relationships
     @Parent(key: "subsidiary_id")
     var subsidiary: Subsidiary

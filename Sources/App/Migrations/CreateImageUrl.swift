@@ -5,6 +5,8 @@ struct CreateImageUrl: Migration {
         return database.schema("imageUrls")
             .id()
             .field("imageUrl", .string, .required)
+            .field("created_at", .datetime)
+            .field("updated_at", .datetime)
             .create()
     }
 

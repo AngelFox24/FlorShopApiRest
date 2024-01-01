@@ -27,6 +27,8 @@ final class SaleDetail: Model, Content {
     
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
+    @Timestamp(key: "updated_at", on: .update)
+    var updatedAt: Date?
     
     //MARK: Relationship
     @Parent(key: "sale_id")

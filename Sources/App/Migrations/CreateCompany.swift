@@ -6,6 +6,8 @@ struct CreateCompany: Migration {
             .id()
             .field("companyName", .string, .required)
             .field("ruc", .string)
+            .field("created_at", .datetime)
+            .field("updated_at", .datetime)
             .create()
     }
 

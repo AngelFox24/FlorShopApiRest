@@ -13,6 +13,8 @@ struct CreateEmployee: Migration {
             .field("active", .bool, .required)
             .field("subsidiary_id", .uuid, .required, .references("subsidiaries", "id"))
             .field("imageUrl_id", .uuid, .references("imageUrls", "id"))
+            .field("created_at", .datetime)
+            .field("updated_at", .datetime)
             .create()
     }
     

@@ -18,6 +18,11 @@ final class Subsidiary: Model, Content {
     @Field(key: "name")
     var name: String
     
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+    @Timestamp(key: "updated_at", on: .update)
+    var updatedAt: Date?
+    
     //MARK: Relationship
     @Parent(key: "company_id")
     var company: Company

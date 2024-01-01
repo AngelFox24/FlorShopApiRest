@@ -20,6 +20,11 @@ final class Company: Model, Content {
     @Field(key: "ruc")
     var ruc: String
     
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+    @Timestamp(key: "updated_at", on: .update)
+    var updatedAt: Date?
+    
     //MARK: Relationship
     @Children(for: \.$company)
     var toSubsidiary: [Subsidiary]

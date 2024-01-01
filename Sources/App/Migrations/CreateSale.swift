@@ -13,6 +13,7 @@ struct CreateSale: Migration {
             .field("employee_id", .uuid, .required, .references("employees", "id"))
             .field("subsidiary_id", .uuid, .required, .references("subsidiaries", "id"))
             .field("created_at", .datetime)
+            .field("updated_at", .datetime)
             .create()
     }
 
