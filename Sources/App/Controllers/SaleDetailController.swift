@@ -8,15 +8,15 @@ struct SaleDetailController: RouteCollection {
         saleDetails.post(use: create)
     }
     
-    func index(req: Request) throws -> EventLoopFuture<[SaleDetail]> {
-        return SaleDetail.query(on: req.db).all()
+    func index(req: Request) async throws -> [SaleDetail] {
+        try await SaleDetail.query(on: req.db).all()
     }
-    func create(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+    func create(req: Request) async throws -> HTTPStatus {
         let saleDetail = try req.content.decode(SaleDetail.self)
         guard saleDetail.id != nil else {
-            let error = Abort(.badRequest, reason: "Se debe proporcionar el Id al registro")
-            return req.eventLoop.makeFailedFuture(error)
+            throw Abort(.badRequest, reason: "Se debe proporcionar el Id al registro")
         }
-        return saleDetail.save(on: req.db).transform(to: .ok)
+        try await saleDetail.save(on: req.db)
+        return .ok
     }
 }

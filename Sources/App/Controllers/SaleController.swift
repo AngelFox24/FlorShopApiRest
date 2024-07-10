@@ -8,22 +8,56 @@ struct SaleController: RouteCollection {
         sales.post(use: create)
     }
     
-    func index(req: Request) throws -> EventLoopFuture<[Sale]> {
-        return Sale.query(on: req.db).all()
+    func index(req: Request) async throws -> [Sale] {
+        try await Sale.query(on: req.db).all()
     }
-    func create(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+    
+//    func create(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+//        let saleDTO = try req.content.decode(SaleDTO.self)
+//        let sale = Sale(id: saleDTO.id, paid: saleDTO.paid, paymentType: saleDTO.paymentType, saleDate: saleDTO.saleDate, total: saleDTO.total, subsidiaryID: saleDTO.subsidiaryId, customerID: saleDTO.customerId, employeeID: saleDTO.employeeId)
+//        return sale.save(on: req.db).flatMap { //Sincrono
+//            return req.eventLoop.flatten( //Asincrono
+//                saleDTO.saleDetail.map { saleDetailDTO in
+//                    let saleDetail = SaleDetail(id: saleDetailDTO.id, productName: saleDetailDTO.productName, quantitySold: saleDetailDTO.quantitySold, subtotal: saleDetailDTO.subtotal, unitCost: saleDetailDTO.unitCost, unitPrice: saleDetailDTO.unitPrice, saleID: saleDTO.id, imageUrlID: saleDetailDTO.imageUrlId)
+//                    return saleDetail.save(on: req.db)
+//                }
+//            ).transform(to: .ok)
+//        }.flatMapError { error in
+//            // Manejar el error aquí según tus necesidades.
+//            return req.eventLoop.makeFailedFuture(error)
+//        }
+//    }
+    
+    func create(req: Request) async throws -> HTTPStatus {
         let saleDTO = try req.content.decode(SaleDTO.self)
-        let sale = Sale(id: saleDTO.id, paid: saleDTO.paid, paymentType: saleDTO.paymentType, saleDate: saleDTO.saleDate, total: saleDTO.total, subsidiaryID: saleDTO.subsidiaryId, customerID: saleDTO.customerId, employeeID: saleDTO.employeeId)
-        return sale.save(on: req.db).flatMap { //Sincrono
-            return req.eventLoop.flatten( //Asincrono
-                saleDTO.saleDetail.map { saleDetailDTO in
-                    let saleDetail = SaleDetail(id: saleDetailDTO.id, productName: saleDetailDTO.productName, quantitySold: saleDetailDTO.quantitySold, subtotal: saleDetailDTO.subtotal, unitCost: saleDetailDTO.unitCost, unitPrice: saleDetailDTO.unitPrice, saleID: saleDTO.id, imageUrlID: saleDetailDTO.imageUrlId)
-                    return saleDetail.save(on: req.db)
-                }
-            ).transform(to: .ok)
-        }.flatMapError { error in
-            // Manejar el error aquí según tus necesidades.
-            return req.eventLoop.makeFailedFuture(error)
+        let sale = Sale(
+            id: saleDTO.id,
+            paid: saleDTO.paid,
+            paymentType: saleDTO.paymentType,
+            saleDate: saleDTO.saleDate,
+            total: saleDTO.total,
+            subsidiaryID: saleDTO.subsidiaryId,
+            customerID: saleDTO.customerId,
+            employeeID: saleDTO.employeeId
+        )
+        let saleDetails = saleDTO.saleDetail.map { saleDetailDTO in
+            return SaleDetail(
+                id: saleDetailDTO.id,
+                productName: saleDetailDTO.productName,
+                quantitySold: saleDetailDTO.quantitySold,
+                subtotal: saleDetailDTO.subtotal,
+                unitCost: saleDetailDTO.unitCost,
+                unitPrice: saleDetailDTO.unitPrice,
+                saleID: saleDTO.id,
+                imageUrlID: saleDetailDTO.imageUrlId
+            )
+        }
+        return try await req.db.transaction { transaction in
+            try await sale.save(on: transaction)
+            for saleDetail in saleDetails {
+                try await saleDetail.save(on: transaction)
+            }
+            return .ok
         }
     }
 }

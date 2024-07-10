@@ -8,15 +8,15 @@ struct CustomerContoller: RouteCollection {
         customers.post(use: create)
     }
     
-    func index(req: Request) throws -> EventLoopFuture<[Customer]> {
-        return Customer.query(on: req.db).all()
+    func index(req: Request) async throws -> [Customer] {
+        try await Customer.query(on: req.db).all()
     }
-    func create(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+    func create(req: Request) async throws -> HTTPStatus {
         let customer = try req.content.decode(Customer.self)
         guard customer.id != nil else {
-            let error = Abort(.badRequest, reason: "Se debe proporcionar el Id al registro")
-            return req.eventLoop.makeFailedFuture(error)
+            throw Abort(.badRequest, reason: "Se debe proporcionar el Id al registro")
         }
-        return customer.save(on: req.db).transform(to: .ok)
+        try await customer.save(on: req.db)
+        return .ok
     }
 }

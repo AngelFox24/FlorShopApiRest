@@ -8,26 +8,24 @@ struct ProductController: RouteCollection {
         products.post(use: create)
     }
     
-    func index(req: Request) throws -> EventLoopFuture<[ProductDTO]> {
-        return Product.query(on: req.db).all().map { products in
-            products.map { product in
-                ProductDTO(
-                    id: product.id!,
-                    productName: product.productName,
-                    active: product.active,
-                    expirationDate: product.expirationDate,
-                    quantityStock: product.quantityStock,
-                    unitCost: product.unitCost,
-                    unitPrice: product.unitPrice,
-                    subsidiaryId: product.$subsidiary.id,
-                    imageUrlId: product.$imageUrl.id!,
-                    createdAt: product.createdAt,
-                    updatedAt: product.updatedAt)
-            }
+    func index(req: Request) async throws -> [ProductDTO] {
+        try await Product.query(on: req.db).all().map { product in
+            ProductDTO(
+                id: product.id!,
+                productName: product.productName,
+                active: product.active,
+                expirationDate: product.expirationDate,
+                quantityStock: product.quantityStock,
+                unitCost: product.unitCost,
+                unitPrice: product.unitPrice,
+                subsidiaryId: product.$subsidiary.id,
+                imageUrlId: product.$imageUrl.id!,
+                createdAt: product.createdAt,
+                updatedAt: product.updatedAt)
         }
     }
     
-    func create(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+    func create(req: Request) async throws -> HTTPStatus {
         let productDTO = try req.content.decode(ProductDTO.self)
         let product = Product(
             id: productDTO.id,
@@ -39,7 +37,8 @@ struct ProductController: RouteCollection {
             unitPrice: productDTO.unitPrice,
             subsidiaryID: productDTO.subsidiaryId,
             imageUrlID: productDTO.imageUrlId)
-        return product.save(on: req.db).transform(to: .ok)
+        try await product.save(on: req.db)
+        return .ok
     }
 }
 

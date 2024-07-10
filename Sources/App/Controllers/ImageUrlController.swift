@@ -8,15 +8,15 @@ struct ImageUrlController: RouteCollection {
         imageUrl.post(use: create)
     }
     
-    func index(req: Request) throws -> EventLoopFuture<[ImageUrl]> {
-        return ImageUrl.query(on: req.db).all()
+    func index(req: Request) async throws -> [ImageUrl] {
+        try await ImageUrl.query(on: req.db).all()
     }
-    func create(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+    func create(req: Request) async throws -> HTTPStatus {
         let imageUrl = try req.content.decode(ImageUrl.self)
         guard imageUrl.id != nil else {
-            let error = Abort(.badRequest, reason: "Se debe proporcionar el Id al registro")
-            return req.eventLoop.makeFailedFuture(error)
+            throw Abort(.badRequest, reason: "Se debe proporcionar el Id al registro")
         }
-        return imageUrl.save(on: req.db).transform(to: .ok)
+        try await imageUrl.save(on: req.db)
+        return .ok
     }
 }

@@ -8,15 +8,15 @@ struct CompanyController: RouteCollection {
         companies.post(use: create)
     }
     
-    func index(req: Request) throws -> EventLoopFuture<[Company]> {
-        return Company.query(on: req.db).all()
+    func index(req: Request) async throws -> [Company] {
+        try await Company.query(on: req.db).all()
     }
-    func create(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+    func create(req: Request) async throws -> HTTPStatus {
         let company = try req.content.decode(Company.self)
         guard company.id != nil else {
-            let error = Abort(.badRequest, reason: "Se debe proporcionar el Id al registro")
-            return req.eventLoop.makeFailedFuture(error)
+            throw Abort(.badRequest, reason: "Se debe proporcionar el Id al registro")
         }
-        return company.save(on: req.db).transform(to: .ok)
+        try await company.save(on: req.db)
+        return .ok
     }
 }
