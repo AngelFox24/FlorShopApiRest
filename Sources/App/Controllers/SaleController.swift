@@ -14,8 +14,8 @@ struct SaleController: RouteCollection {
     func create(req: Request) throws -> EventLoopFuture<HTTPStatus> {
         let saleDTO = try req.content.decode(SaleDTO.self)
         let sale = Sale(id: saleDTO.id, paid: saleDTO.paid, paymentType: saleDTO.paymentType, saleDate: saleDTO.saleDate, total: saleDTO.total, subsidiaryID: saleDTO.subsidiaryId, customerID: saleDTO.customerId, employeeID: saleDTO.employeeId)
-        return sale.save(on: req.db).flatMap {
-            return req.eventLoop.flatten(
+        return sale.save(on: req.db).flatMap { //Sincrono
+            return req.eventLoop.flatten( //Asincrono
                 saleDTO.saleDetail.map { saleDetailDTO in
                     let saleDetail = SaleDetail(id: saleDetailDTO.id, productName: saleDetailDTO.productName, quantitySold: saleDetailDTO.quantitySold, subtotal: saleDetailDTO.subtotal, unitCost: saleDetailDTO.unitCost, unitPrice: saleDetailDTO.unitPrice, saleID: saleDTO.id, imageUrlID: saleDetailDTO.imageUrlId)
                     return saleDetail.save(on: req.db)

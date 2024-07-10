@@ -1,8 +1,8 @@
 import Fluent
 
-struct CreateSubsidiary: Migration {
-    func prepare(on database: Database) -> EventLoopFuture<Void> {
-        return database.schema("subsidiaries")
+struct CreateSubsidiary: AsyncMigration {
+    func prepare(on database: Database) async throws {
+        try await database.schema("subsidiaries")
             .id()
             .field("name", .string, .required)
             .field("company_id", .uuid, .required, .references("companies", "id"))
@@ -12,7 +12,7 @@ struct CreateSubsidiary: Migration {
             .create()
     }
 
-    func revert(on database: Database) -> EventLoopFuture<Void> {
-        return database.schema("subsidiaries").delete()
+    func revert(on database: Database) async throws {
+        try await database.schema("subsidiaries").delete()
     }
 }

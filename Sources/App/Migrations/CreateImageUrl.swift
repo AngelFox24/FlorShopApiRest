@@ -1,8 +1,8 @@
 import Fluent
 
-struct CreateImageUrl: Migration {
-    func prepare(on database: Database) -> EventLoopFuture<Void> {
-        return database.schema("imageUrls")
+struct CreateImageUrl: AsyncMigration {
+    func prepare(on database: Database) async throws {
+        try await database.schema("imageUrls")
             .id()
             .field("imageUrl", .string, .required)
             .field("created_at", .datetime)
@@ -10,7 +10,7 @@ struct CreateImageUrl: Migration {
             .create()
     }
 
-    func revert(on database: Database) -> EventLoopFuture<Void> {
-        return database.schema("imageUrls").delete()
+    func revert(on database: Database) async throws {
+        try await database.schema("imageUrls").delete()
     }
 }

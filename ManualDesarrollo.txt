@@ -1,0 +1,4 @@
+Migrar Manualmente (Con Borrado de BD)
+- docker compose down -v
+- docker compose up db
+- (correr la app desde xcode)
