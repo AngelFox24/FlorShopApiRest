@@ -12,7 +12,7 @@ struct SubsidiaryController: RouteCollection {
     func index(req: Request) async throws -> [Subsidiary] {
         try await Subsidiary.query(on: req.db)
             .with(\.$imageUrl)
-            .with(\.$company)// Carga ansiosa para obtener datos del artista
+            .with(\.$company)
             .all()
     }
     
