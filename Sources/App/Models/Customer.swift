@@ -19,15 +19,27 @@ final class Customer: Model, Content {
     @Field(key: "lastName")
     var lastName: String
     @Field(key: "totalDebt")
-    var totalDebt: Double
+    var totalDebt: Int
+    @Field(key: "creditScore")
+    var creditScore: Int
+    @Field(key: "creditDays")
+    var creditDays: Int
+    @Field(key: "isCreditLimitActive")
+    var isCreditLimitActive: Bool
+    @Field(key: "isCreditLimit")
+    var isCreditLimit: Bool
+    @Field(key: "isDateLimitActive")
+    var isDateLimitActive: Bool
+    @Field(key: "isDateLimit")
+    var isDateLimit: Bool
     @Field(key: "dateLimit")
     var dateLimit: Date
+    @Field(key: "lastDatePurchase")
+    var lastDatePurchase: Date
     @Field(key: "phoneNumber")
     var phoneNumber: String
     @Field(key: "creditLimit")
-    var creditLimit: Double
-    @Field(key: "active")
-    var active: Bool
+    var creditLimit: Int
     
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
@@ -48,15 +60,38 @@ final class Customer: Model, Content {
     
     init() { }
     
-    init(id: UUID? = nil, name: String, lastName: String, totalDebt: Double, dateLimit: Date, phoneNumber: String, creditLimit: Double, active: Bool, companyID: Company.IDValue, imageUrlID: ImageUrl.IDValue?) {
+    init(
+        id: UUID? = nil,
+        name: String,
+        lastName: String,
+        totalDebt: Int,
+        creditScore: Int,
+        creditDays: Int,
+        isCreditLimitActive: Bool,
+        isCreditLimit: Bool,
+        isDateLimitActive: Bool,
+        isDateLimit: Bool,
+        dateLimit: Date,
+        lastDatePurchase: Date,
+        phoneNumber: String,
+        creditLimit: Int,
+        companyID: Company.IDValue,
+        imageUrlID: ImageUrl.IDValue?
+    ) {
         self.id = id
         self.name = name
         self.lastName = lastName
         self.totalDebt = totalDebt
+        self.creditScore = creditScore
+        self.creditDays = creditDays
+        self.isCreditLimitActive = isCreditLimitActive
+        self.isCreditLimit = isCreditLimit
+        self.isDateLimitActive = isDateLimitActive
+        self.isDateLimit = isDateLimit
         self.dateLimit = dateLimit
+        self.lastDatePurchase = lastDatePurchase
         self.phoneNumber = phoneNumber
         self.creditLimit = creditLimit
-        self.active = active
         self.$company.id = companyID
         self.$imageUrl.id = imageUrlID
     }

@@ -7,7 +7,7 @@ struct CreateSale: AsyncMigration {
             .field("paid", .bool, .required)
             .field("paymentType", .string, .required)
             .field("saleDate", .date, .required)
-            .field("total", .double, .required)
+            .field("total", .int, .required)
             .field("customer_id", .uuid, .references("customers", "id"))
             .field("employee_id", .uuid, .required, .references("employees", "id"))
             .field("subsidiary_id", .uuid, .required, .references("subsidiaries", "id"))

@@ -9,16 +9,20 @@ final class Product: Model, Content {
     
     @Field(key: "productName")
     var productName: String
+    @Field(key: "barCode")
+    var barCode: String
     @Field(key: "active")
     var active: Bool
     @Field(key: "expirationDate")
     var expirationDate: Date?
+    @Field(key: "unitType")
+    var unitType: String
     @Field(key: "quantityStock")
     var quantityStock: Int
     @Field(key: "unitCost")
-    var unitCost: Double
+    var unitCost: Int
     @Field(key: "unitPrice")
-    var unitPrice: Double
+    var unitPrice: Int
     
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
@@ -35,11 +39,25 @@ final class Product: Model, Content {
     
     init() { }
     
-    init(id: UUID? = nil, productName: String, active: Bool, expirationDate: Date? = nil, quantityStock: Int, unitCost: Double, unitPrice: Double, subsidiaryID: Subsidiary.IDValue, imageUrlID: ImageUrl.IDValue?) {
+    init(
+        id: UUID? = nil,
+        productName: String,
+        barCode: String,
+        active: Bool,
+        expirationDate: Date? = nil,
+        unitType: String,
+        quantityStock: Int,
+        unitCost: Int,
+        unitPrice: Int,
+        subsidiaryID: Subsidiary.IDValue,
+        imageUrlID: ImageUrl.IDValue?
+    ) {
         self.id = id
         self.productName = productName
+        self.barCode = barCode
         self.active = active
         self.expirationDate = expirationDate
+        self.unitType = unitType
         self.quantityStock = quantityStock
         self.unitCost = unitCost
         self.unitPrice = unitPrice

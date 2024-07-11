@@ -44,8 +44,10 @@ struct SaleController: RouteCollection {
             return SaleDetail(
                 id: saleDetailDTO.id,
                 productName: saleDetailDTO.productName,
+                barCode: saleDetailDTO.barCode,
                 quantitySold: saleDetailDTO.quantitySold,
                 subtotal: saleDetailDTO.subtotal,
+                unitType: saleDetailDTO.unitType,
                 unitCost: saleDetailDTO.unitCost,
                 unitPrice: saleDetailDTO.unitPrice,
                 saleID: saleDTO.id,
@@ -67,7 +69,7 @@ struct SaleDTO: Content {
     let paid: Bool
     let paymentType: String
     let saleDate: Date
-    let total: Double
+    let total: Int
     let subsidiaryId: UUID
     let customerId: UUID?
     let employeeId: UUID
@@ -77,9 +79,11 @@ struct SaleDTO: Content {
 struct SaleDetailDTO: Content {
     let id: UUID
     let productName: String
+    let barCode: String
     let quantitySold: Int
-    let subtotal: Double
-    let unitCost: Double
-    let unitPrice: Double
+    let subtotal: Int
+    let unitType: String
+    let unitCost: Int
+    let unitPrice: Int
     let imageUrlId: UUID
 }

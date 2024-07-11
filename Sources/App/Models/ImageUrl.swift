@@ -16,6 +16,8 @@ final class ImageUrl: Model, Content {
     
     @Field(key: "imageUrl")
     var imageUrl: String
+    @Field(key: "imageHash")
+    var imageHash: String
     
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
@@ -40,8 +42,13 @@ final class ImageUrl: Model, Content {
     
     init() { }
     
-    init(id: UUID? = nil, imageUrl: String) {
+    init(
+        id: UUID? = nil,
+        imageUrl: String,
+        imageHash: String
+    ) {
         self.id = id
         self.imageUrl = imageUrl
+        self.imageHash = imageHash
     }
 }

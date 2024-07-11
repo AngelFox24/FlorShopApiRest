@@ -5,6 +5,7 @@ struct CreateImageUrl: AsyncMigration {
         try await database.schema("imageUrls")
             .id()
             .field("imageUrl", .string, .required)
+            .field("imageHash", .string, .required)
             .field("created_at", .datetime)
             .field("updated_at", .datetime)
             .create()
