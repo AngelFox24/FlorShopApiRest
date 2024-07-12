@@ -63,27 +63,3 @@ struct SaleController: RouteCollection {
         }
     }
 }
-
-struct SaleDTO: Content {
-    let id: UUID
-    let paid: Bool
-    let paymentType: String
-    let saleDate: Date
-    let total: Int
-    let subsidiaryId: UUID
-    let customerId: UUID?
-    let employeeId: UUID
-    let saleDetail: [SaleDetailDTO]
-}
-
-struct SaleDetailDTO: Content {
-    let id: UUID
-    let productName: String
-    let barCode: String
-    let quantitySold: Int
-    let subtotal: Int
-    let unitType: String
-    let unitCost: Int
-    let unitPrice: Int
-    let imageUrlId: UUID
-}

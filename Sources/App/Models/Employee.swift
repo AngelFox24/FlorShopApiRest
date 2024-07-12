@@ -48,7 +48,18 @@ final class Employee: Model, Content {
     
     init() { }
     
-    init(id: UUID? = nil, user: String, name: String, lastName: String, email: String, phoneNumber: String, role: String, active: Bool, subsidiaryID: Subsidiary.IDValue, imageUrlID: ImageUrl.IDValue?) {
+    init(
+        id: UUID? = nil,
+        user: String,
+        name: String,
+        lastName: String,
+        email: String,
+        phoneNumber: String,
+        role: String,
+        active: Bool,
+        subsidiaryID: Subsidiary.IDValue,
+        imageUrlID: ImageUrl.IDValue?
+    ) {
         self.id = id
         self.user = user
         self.name = name

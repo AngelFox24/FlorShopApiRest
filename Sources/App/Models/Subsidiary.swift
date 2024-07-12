@@ -32,7 +32,12 @@ final class Subsidiary: Model, Content {
     
     init() { }
     
-    init(id: UUID? = nil, name: String, companyID: Company.IDValue, imageUrlID: ImageUrl.IDValue?) {
+    init(
+        id: UUID? = nil,
+        name: String,
+        companyID: Company.IDValue,
+        imageUrlID: ImageUrl.IDValue?
+    ) {
         self.id = id
         self.name = name
         self.$company.id = companyID

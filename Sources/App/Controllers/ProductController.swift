@@ -11,6 +11,7 @@ struct ProductController: RouteCollection {
     }
     
     func index(req: Request) async throws -> [ProductDTO] {
+        //TODO: Pagination
         try await Product.query(on: req.db).with(\.$imageUrl).all().mapToListProductDTO()
     }
     
@@ -93,90 +94,4 @@ struct ProductController: RouteCollection {
 struct ProductRequest: Content {
     let subsidiaryId: UUID
     let updatedSince: Date
-}
-
-struct ProductDTO: Content {
-    let id: UUID
-    let productName: String
-    let barCode: String
-    let active: Bool
-    let expirationDate: Date?
-    let quantityStock: Int
-    let unitType: String
-    let unitCost: Int
-    let unitPrice: Int
-    let subsidiaryId: UUID
-    let imageUrl: ImageURLDTO?
-    let createdAt: Date?
-    let updatedAt: Date?
-}
-
-struct ImageURLDTO: Content {
-    let id: UUID
-    let imageUrl: String
-    let imageHash: String
-}
-
-extension Array where Element == Product {
-    func mapToListProductDTO() -> [ProductDTO] {
-        return self.compactMap({$0.toProductDTO()})
-    }
-}
-
-extension ProductDTO {
-    func toProduct() -> Product {
-        return Product(
-            id: id,
-            productName: productName,
-            barCode: barCode,
-            active: active,
-            expirationDate: expirationDate,
-            unitType: unitType,
-            quantityStock: quantityStock,
-            unitCost: unitCost,
-            unitPrice: unitPrice,
-            subsidiaryID: subsidiaryId,
-            imageUrlID: imageUrl?.id
-        )
-    }
-}
-
-extension Product {
-    func toProductDTO() -> ProductDTO {
-        return ProductDTO(
-            id: id!,
-            productName: productName,
-            barCode: barCode,
-            active: active,
-            expirationDate: expirationDate,
-            quantityStock: quantityStock,
-            unitType: unitType,
-            unitCost: unitCost,
-            unitPrice: unitPrice,
-            subsidiaryId: self.$subsidiary.id,
-            imageUrl: imageUrl?.toImageUrlDTO(),
-            createdAt: createdAt,
-            updatedAt: updatedAt
-        )
-    }
-}
-
-extension ImageURLDTO {
-    func toImageUrl() -> ImageUrl {
-        return ImageUrl(
-            id: id,
-            imageUrl: imageUrl,
-            imageHash: imageHash
-        )
-    }
-}
-
-extension ImageUrl {
-    func toImageUrlDTO() -> ImageURLDTO {
-        return ImageURLDTO(
-            id: id!,
-            imageUrl: imageUrl,
-            imageHash: imageHash
-        )
-    }
 }
