@@ -8,8 +8,8 @@ struct CustomerContoller: RouteCollection {
         customers.post(use: create)
     }
     
-    func index(req: Request) async throws -> [Customer] {
-        try await Customer.query(on: req.db).all()
+    func index(req: Request) async throws -> [CustomerDTO] {
+        try await Customer.query(on: req.db).all().mapToListCustomerDTO()
     }
     func create(req: Request) async throws -> HTTPStatus {
         let customer = try req.content.decode(Customer.self)

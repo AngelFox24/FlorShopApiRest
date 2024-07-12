@@ -8,9 +8,9 @@ struct ImageUrlController: RouteCollection {
 //        imageUrl.post(use: create)
     }
     
-    func index(req: Request) async throws -> [ImageUrl] {
+    func index(req: Request) async throws -> [ImageURLDTO] {
         //TODO: Pagination
-        try await ImageUrl.query(on: req.db).all()
+        try await ImageUrl.query(on: req.db).all().mapToListImageURLDTO()
     }
     //Not Create with this func
 //    func create(req: Request) async throws -> HTTPStatus {

@@ -8,8 +8,8 @@ struct SaleDetailController: RouteCollection {
 //        saleDetails.post(use: create)
     }
     
-    func index(req: Request) async throws -> [SaleDetail] {
-        try await SaleDetail.query(on: req.db).all()
+    func index(req: Request) async throws -> [SaleDetailDTO] {
+        try await SaleDetail.query(on: req.db).all().mapToListSaleDetailDTO()
     }
     //Not Create with this func
 //    func create(req: Request) async throws -> HTTPStatus {

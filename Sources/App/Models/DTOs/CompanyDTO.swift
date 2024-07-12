@@ -9,10 +9,9 @@ import Foundation
 import Vapor
 
 struct CompanyDTO: Content {
-    let id: UUID?
+    let id: UUID
     let companyName: String
     let ruc: String
     let createdAt: Date?
     let updatedAt: Date?
-    let toSubsidiaryID: UUID
 }

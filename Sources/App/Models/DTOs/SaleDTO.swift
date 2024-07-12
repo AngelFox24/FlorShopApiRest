@@ -18,4 +18,6 @@ struct SaleDTO: Content {
     let customerId: UUID?
     let employeeId: UUID
     let saleDetail: [SaleDetailDTO]
+    let createdAt: Date?
+    let updatedAt: Date?
 }

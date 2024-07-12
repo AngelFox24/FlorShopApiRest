@@ -8,8 +8,8 @@ struct EmployeeController: RouteCollection {
         employees.post(use: create)
     }
     
-    func index(req: Request) async throws -> [Employee] {
-        try await Employee.query(on: req.db).all()
+    func index(req: Request) async throws -> [EmployeeDTO] {
+        try await Employee.query(on: req.db).all().mapToListEmployeeDTO()
     }
     func create(req: Request) async throws -> HTTPStatus {
         let employee = try req.content.decode(Employee.self)

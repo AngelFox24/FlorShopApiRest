@@ -8,8 +8,8 @@ struct SaleController: RouteCollection {
         sales.post(use: create)
     }
     
-    func index(req: Request) async throws -> [Sale] {
-        try await Sale.query(on: req.db).all()
+    func index(req: Request) async throws -> [SaleDTO] {
+        try await Sale.query(on: req.db).all().mapToListSaleDTO()
     }
     
 //    func create(req: Request) throws -> EventLoopFuture<HTTPStatus> {
@@ -51,7 +51,7 @@ struct SaleController: RouteCollection {
                 unitCost: saleDetailDTO.unitCost,
                 unitPrice: saleDetailDTO.unitPrice,
                 saleID: saleDTO.id,
-                imageUrlID: saleDetailDTO.imageUrlId
+                imageUrlID: saleDetailDTO.imageUrl?.id
             )
         }
         return try await req.db.transaction { transaction in

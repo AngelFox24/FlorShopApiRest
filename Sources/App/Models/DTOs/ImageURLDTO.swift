@@ -12,4 +12,6 @@ struct ImageURLDTO: Content {
     let id: UUID
     let imageUrl: String
     let imageHash: String
+    let createdAt: Date?
+    let updatedAt: Date?
 }

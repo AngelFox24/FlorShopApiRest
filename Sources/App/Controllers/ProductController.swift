@@ -34,18 +34,17 @@ struct ProductController: RouteCollection {
     
     func save(req: Request) async throws -> HTTPStatus {
         let productDTO = try req.content.decode(ProductDTO.self)
-        let imageUrlDTO = productDTO.imageUrl
         
         return try await req.db.transaction { transaction in
-            if let imageURLDTONN = imageUrlDTO {
-                if let imageUrl = try await ImageUrl.find(imageURLDTONN.id, on: transaction) {
+            if let imageURLDTO = productDTO.imageUrl {
+                if let imageUrl = try await ImageUrl.find(imageURLDTO.id, on: transaction) {
                     //Update
-                    imageUrl.imageUrl = imageURLDTONN.imageUrl
-                    imageUrl.imageHash = imageURLDTONN.imageHash
+                    imageUrl.imageUrl = imageURLDTO.imageUrl
+                    imageUrl.imageHash = imageURLDTO.imageHash
                     try await imageUrl.update(on: transaction)
                 } else {
                     //Create
-                    let imageUrlNew = imageURLDTONN.toImageUrl()
+                    let imageUrlNew = imageURLDTO.toImageUrl()
                     try await imageUrlNew.save(on: transaction)
                 }
             }

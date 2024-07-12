@@ -31,7 +31,11 @@ final class Company: Model, Content {
     
     init() { }
     
-    init(id: UUID? = nil, companyName: String, ruc: String) {
+    init(
+        id: UUID? = nil,
+        companyName: String,
+        ruc: String
+    ) {
         self.id = id
         self.companyName = companyName
         self.ruc = ruc
