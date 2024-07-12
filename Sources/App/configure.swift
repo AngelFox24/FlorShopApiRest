@@ -7,6 +7,8 @@ import Vapor
 public func configure(_ app: Application) async throws {
     // uncomment to serve files from /Public folder
     // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    app.http.server.configuration.hostname = "192.168.2.15"
+    app.http.server.configuration.port = 8080
 
     app.databases.use(DatabaseConfigurationFactory.postgres(configuration: .init(
         hostname: Environment.get("DATABASE_HOST") ?? "localhost",
@@ -26,9 +28,9 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(CreateSale())
     app.migrations.add(CreateSaleDetail())
     //Espera a que la migracion se haga
-    //try await app.autoMigrate().wait()
+    try await app.autoMigrate().wait()
     //No espera a que la migracion se haga
-    try app.autoMigrate().get()
+//    try app.autoMigrate().get()
     // register routes
     try routes(app)
 }

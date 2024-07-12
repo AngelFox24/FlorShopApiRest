@@ -6,42 +6,12 @@ struct ProductController: RouteCollection {
         let products = routes.grouped("products")
         products.get(use: index)
         products.post("sync", use: sync)
-        products.post(use: create)
+        products.post(use: save)
         products.post("bulkCreate", use: bulkCreate)
     }
     
     func index(req: Request) async throws -> [ProductDTO] {
-        try await Product.query(on: req.db).with(\.$imageUrl).all().map { product in
-            guard let imageUrlId = product.imageUrl?.id else {
-                throw Abort(.badRequest, reason: "imageURL no tiene ID")
-            }
-            guard let imageUrlS = product.imageUrl?.imageUrl else {
-                throw Abort(.badRequest, reason: "imageURL no tiene url")
-            }
-            guard let imageHash = product.imageUrl?.imageHash else {
-                throw Abort(.badRequest, reason: "imageURL no tiene Hash")
-            }
-            let productDTO = ProductDTO(
-                id: product.id!,
-                productName: product.productName,
-                barCode: product.barCode,
-                active: product.active,
-                expirationDate: product.expirationDate,
-                quantityStock: product.quantityStock,
-                unitType: product.unitType,
-                unitCost: product.unitCost,
-                unitPrice: product.unitPrice,
-                subsidiaryId: product.$subsidiary.id,
-                imageUrl: ImageURLDTO(
-                    id: imageUrlId,
-                    imageUrl: imageUrlS,
-                    imageHash: imageHash
-                ),
-                createdAt: product.createdAt,
-                updatedAt: product.updatedAt
-            )
-            return productDTO
-        }
+        try await Product.query(on: req.db).with(\.$imageUrl).all().mapToListProductDTO()
     }
     
     func sync(req: Request) async throws -> [ProductDTO] {
@@ -58,67 +28,50 @@ struct ProductController: RouteCollection {
         
         let products = try await query.all()
         
-        return try products.map { product in
-            guard let imageUrlId = product.imageUrl?.id else {
-                throw Abort(.badRequest, reason: "imageURL no tiene ID")
-            }
-            guard let imageUrlS = product.imageUrl?.imageUrl else {
-                throw Abort(.badRequest, reason: "imageURL no tiene url")
-            }
-            guard let imageHash = product.imageUrl?.imageHash else {
-                throw Abort(.badRequest, reason: "imageURL no tiene Hash")
-            }
-            return ProductDTO(
-                id: product.id!,
-                productName: product.productName,
-                barCode: product.barCode,
-                active: product.active,
-                expirationDate: product.expirationDate,
-                quantityStock: product.quantityStock,
-                unitType: product.unitType,
-                unitCost: product.unitCost,
-                unitPrice: product.unitPrice,
-                subsidiaryId: product.$subsidiary.id,
-                imageUrl: ImageURLDTO(
-                    id: imageUrlId,
-                    imageUrl: imageUrlS,
-                    imageHash: imageHash
-                ),
-                createdAt: product.createdAt,
-                updatedAt: product.updatedAt
-            )
-        }
+        return products.mapToListProductDTO()
     }
     
-    func create(req: Request) async throws -> HTTPStatus {
+    func save(req: Request) async throws -> HTTPStatus {
         let productDTO = try req.content.decode(ProductDTO.self)
         let imageUrlDTO = productDTO.imageUrl
-        let imageUrl = ImageUrl(
-            id: imageUrlDTO.id,
-            imageUrl: imageUrlDTO.imageUrl,
-            imageHash: imageUrlDTO.imageHash
-        )
-        let product = Product(
-            id: productDTO.id,
-            productName: productDTO.productName,
-            barCode: productDTO.barCode,
-            active: productDTO.active,
-            expirationDate: productDTO.expirationDate, //En la BD hay que cambiar de .date a .timestamptz para que registre la hora
-            unitType: productDTO.unitType,
-            quantityStock: productDTO.quantityStock,
-            unitCost: productDTO.unitCost,
-            unitPrice: productDTO.unitPrice,
-            subsidiaryID: productDTO.subsidiaryId,
-            imageUrlID: productDTO.imageUrl.id
-        )
+        
         return try await req.db.transaction { transaction in
-            try await imageUrl.save(on: transaction)
-            try await product.save(on: transaction)
+            if let imageURLDTONN = imageUrlDTO {
+                if let imageUrl = try await ImageUrl.find(imageURLDTONN.id, on: transaction) {
+                    //Update
+                    imageUrl.imageUrl = imageURLDTONN.imageUrl
+                    imageUrl.imageHash = imageURLDTONN.imageHash
+                    try await imageUrl.update(on: transaction)
+                } else {
+                    //Create
+                    let imageUrlNew = imageURLDTONN.toImageUrl()
+                    try await imageUrlNew.save(on: transaction)
+                }
+            }
+            if let product = try await Product.find(productDTO.id, on: transaction) {
+                //Update
+                product.productName = productDTO.productName
+                product.barCode = productDTO.barCode
+                product.active = productDTO.active
+                product.expirationDate = productDTO.expirationDate
+                product.quantityStock = productDTO.quantityStock
+                product.unitType = productDTO.unitType
+                product.unitCost = productDTO.unitCost
+                product.unitPrice = productDTO.unitPrice
+//                product.$subsidiary.id = productDTO.subsidiaryId
+                product.$imageUrl.id = productDTO.imageUrl?.id
+                try await product.update(on: transaction)
+            } else {
+                //Create
+                let productNew = productDTO.toProduct()
+                try await productNew.save(on: transaction)
+            }
             return .ok
         }
     }
     
     func bulkCreate(req: Request) async throws -> HTTPStatus {
+        //No controla elementos repetidos osea Update
         let productsDTO = try req.content.decode([ProductDTO].self)
         
         // Iniciar la transacción
@@ -126,30 +79,12 @@ struct ProductController: RouteCollection {
             // Iterar sobre cada producto y guardarlo
             for productDTO in productsDTO {
                 let imageUrlDTO = productDTO.imageUrl
-                let imageUrl = ImageUrl(
-                    id: imageUrlDTO.id,
-                    imageUrl: imageUrlDTO.imageUrl,
-                    imageHash: imageUrlDTO.imageHash
-                )
-                let product = Product(
-                    id: productDTO.id,
-                    productName: productDTO.productName,
-                    barCode: productDTO.barCode,
-                    active: productDTO.active,
-                    expirationDate: productDTO.expirationDate,
-                    unitType: productDTO.unitType,
-                    quantityStock: productDTO.quantityStock,
-                    unitCost: productDTO.unitCost,
-                    unitPrice: productDTO.unitPrice,
-                    subsidiaryID: productDTO.subsidiaryId,
-                    imageUrlID: productDTO.imageUrl.id
-                )
-                
-                // Guardar el imageUrl y el producto en la transacción
-                try await imageUrl.save(on: transaction)
+                if let imageUrl = imageUrlDTO?.toImageUrl() {
+                    try await imageUrl.save(on: transaction)
+                }
+                let product = productDTO.toProduct()
                 try await product.save(on: transaction)
             }
-            
             return .ok // Todo se guardó exitosamente
         }
     }
@@ -171,7 +106,7 @@ struct ProductDTO: Content {
     let unitCost: Int
     let unitPrice: Int
     let subsidiaryId: UUID
-    let imageUrl: ImageURLDTO
+    let imageUrl: ImageURLDTO?
     let createdAt: Date?
     let updatedAt: Date?
 }
@@ -180,4 +115,68 @@ struct ImageURLDTO: Content {
     let id: UUID
     let imageUrl: String
     let imageHash: String
+}
+
+extension Array where Element == Product {
+    func mapToListProductDTO() -> [ProductDTO] {
+        return self.compactMap({$0.toProductDTO()})
+    }
+}
+
+extension ProductDTO {
+    func toProduct() -> Product {
+        return Product(
+            id: id,
+            productName: productName,
+            barCode: barCode,
+            active: active,
+            expirationDate: expirationDate,
+            unitType: unitType,
+            quantityStock: quantityStock,
+            unitCost: unitCost,
+            unitPrice: unitPrice,
+            subsidiaryID: subsidiaryId,
+            imageUrlID: imageUrl?.id
+        )
+    }
+}
+
+extension Product {
+    func toProductDTO() -> ProductDTO {
+        return ProductDTO(
+            id: id!,
+            productName: productName,
+            barCode: barCode,
+            active: active,
+            expirationDate: expirationDate,
+            quantityStock: quantityStock,
+            unitType: unitType,
+            unitCost: unitCost,
+            unitPrice: unitPrice,
+            subsidiaryId: self.$subsidiary.id,
+            imageUrl: imageUrl?.toImageUrlDTO(),
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
+    }
+}
+
+extension ImageURLDTO {
+    func toImageUrl() -> ImageUrl {
+        return ImageUrl(
+            id: id,
+            imageUrl: imageUrl,
+            imageHash: imageHash
+        )
+    }
+}
+
+extension ImageUrl {
+    func toImageUrlDTO() -> ImageURLDTO {
+        return ImageURLDTO(
+            id: id!,
+            imageUrl: imageUrl,
+            imageHash: imageHash
+        )
+    }
 }
