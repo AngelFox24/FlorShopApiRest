@@ -9,12 +9,10 @@ struct ProductController: RouteCollection {
         products.post(use: save)
         products.post("bulkCreate", use: bulkCreate)
     }
-    
     func index(req: Request) async throws -> [ProductDTO] {
         //TODO: Pagination
         try await Product.query(on: req.db).with(\.$imageUrl).all().mapToListProductDTO()
     }
-    
     func sync(req: Request) async throws -> [ProductDTO] {
         //Precicion de segundos solamente
         //No se requiere mas precicion ya que el objetivo es sincronizar y en caso haya repetidos esto se mitiga en la app
@@ -31,7 +29,6 @@ struct ProductController: RouteCollection {
         
         return products.mapToListProductDTO()
     }
-    
     func save(req: Request) async throws -> HTTPStatus {
         let productDTO = try req.content.decode(ProductDTO.self)
         

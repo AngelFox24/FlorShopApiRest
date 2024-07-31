@@ -5,6 +5,7 @@ struct SubsidiaryController: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
         let subsidiaries = routes.grouped("subsidiaries")
         subsidiaries.get(use: index)
+        subsidiaries.post("sync", use: sync)
         subsidiaries.get("byCompanyId", use: getByCompanyId)
         subsidiaries.post(use: save)
     }
@@ -15,7 +16,22 @@ struct SubsidiaryController: RouteCollection {
             .with(\.$company)
             .all().mapToListSubsidiaryDTO()
     }
-    
+    func sync(req: Request) async throws -> [SubsidiaryDTO] {
+        //Precicion de segundos solamente
+        //No se requiere mas precicion ya que el objetivo es sincronizar y en caso haya repetidos esto se mitiga en la app
+        let request = try req.content.decode(SyncFromCompanyParameters.self)
+        
+        let query = Subsidiary.query(on: req.db)
+            .filter(\.$company.$id == request.companyId)
+            .filter(\.$updatedAt >= request.updatedSince)
+            .sort(\.$updatedAt, .ascending)
+            .with(\.$imageUrl)
+            .limit(50)
+        
+        let subsidiaries = try await query.all()
+        
+        return subsidiaries.mapToListSubsidiaryDTO()
+    }
     func getByCompanyId(req: Request) async throws -> [SubsidiaryDTO] {
         // Obtén el parámetro de consulta "companyId" de la solicitud
         guard let companyId = req.query[UUID.self, at: "companyId"] else {
@@ -60,4 +76,9 @@ struct SubsidiaryController: RouteCollection {
             return .ok
         }
     }
+}
+
+struct SyncFromCompanyParameters: Content {
+    let companyId: UUID
+    let updatedSince: Date
 }
