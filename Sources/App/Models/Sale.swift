@@ -14,8 +14,6 @@ final class Sale: Model, Content {
     @ID(key: .id)
     var id: UUID?
     
-    @Field(key: "paid")
-    var paid: Bool
     @Field(key: "paymentType")
     var paymentType: String
     @Field(key: "saleDate")
@@ -45,7 +43,6 @@ final class Sale: Model, Content {
     
     init(
         id: UUID? = nil,
-        paid: Bool,
         paymentType: String,
         saleDate: Date,
         total: Int,
@@ -54,7 +51,6 @@ final class Sale: Model, Content {
         employeeID: Employee.IDValue
     ) {
         self.id = id
-        self.paid = paid
         self.paymentType = paymentType
         self.saleDate = saleDate
         self.total = total

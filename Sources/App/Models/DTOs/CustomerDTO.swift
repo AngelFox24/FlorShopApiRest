@@ -20,6 +20,7 @@ struct CustomerDTO: Content {
     let isDateLimitActive: Bool
     let isDateLimit: Bool
     let dateLimit: Date
+    var firstDatePurchaseWithCredit: Date?
     let lastDatePurchase: Date
     let phoneNumber: String
     let creditLimit: Int

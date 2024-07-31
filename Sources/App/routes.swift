@@ -9,7 +9,8 @@ func routes(_ app: Application) throws {
     app.get("hello") { req async -> String in
         "Hello, world!"
     }
-
+    
+    try app.register(collection: SessionController())
     try app.register(collection: CompanyController())
     try app.register(collection: ImageUrlController())
     try app.register(collection: SubsidiaryController())

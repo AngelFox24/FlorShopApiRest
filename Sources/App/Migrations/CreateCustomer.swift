@@ -11,7 +11,7 @@ struct CreateCustomer: AsyncMigration {
             .field("creditDays", .int, .required)
             .field("dateLimit", .date, .required)
             .field("lastDatePurchase", .date, .required)
-            .field("firstDatePurchaseWithCredit", .date, .required)
+            .field("firstDatePurchaseWithCredit", .date)
             .field("phoneNumber", .string, .required)
             .field("creditLimit", .int, .required)
             .field("isCreditLimitActive", .bool, .required)

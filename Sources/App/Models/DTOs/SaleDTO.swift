@@ -10,7 +10,6 @@ import Vapor
 
 struct SaleDTO: Content {
     let id: UUID
-    let paid: Bool
     let paymentType: String
     let saleDate: Date
     let total: Int

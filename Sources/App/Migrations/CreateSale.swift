@@ -4,7 +4,6 @@ struct CreateSale: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database.schema("sales")
             .id()
-            .field("paid", .bool, .required)
             .field("paymentType", .string, .required)
             .field("saleDate", .date, .required)
             .field("total", .int, .required)

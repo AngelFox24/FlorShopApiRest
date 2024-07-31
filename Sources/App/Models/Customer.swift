@@ -34,6 +34,8 @@ final class Customer: Model, Content {
     var isDateLimit: Bool
     @Field(key: "dateLimit")
     var dateLimit: Date
+    @Field(key: "firstDatePurchaseWithCredit")
+    var firstDatePurchaseWithCredit: Date?
     @Field(key: "lastDatePurchase")
     var lastDatePurchase: Date
     @Field(key: "phoneNumber")
@@ -72,6 +74,7 @@ final class Customer: Model, Content {
         isDateLimitActive: Bool,
         isDateLimit: Bool,
         dateLimit: Date,
+        firstDatePurchaseWithCredit: Date?,
         lastDatePurchase: Date,
         phoneNumber: String,
         creditLimit: Int,
@@ -89,6 +92,7 @@ final class Customer: Model, Content {
         self.isDateLimitActive = isDateLimitActive
         self.isDateLimit = isDateLimit
         self.dateLimit = dateLimit
+        self.firstDatePurchaseWithCredit = firstDatePurchaseWithCredit
         self.lastDatePurchase = lastDatePurchase
         self.phoneNumber = phoneNumber
         self.creditLimit = creditLimit

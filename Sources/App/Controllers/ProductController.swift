@@ -18,7 +18,7 @@ struct ProductController: RouteCollection {
     func sync(req: Request) async throws -> [ProductDTO] {
         //Precicion de segundos solamente
         //No se requiere mas precicion ya que el objetivo es sincronizar y en caso haya repetidos esto se mitiga en la app
-        let request = try req.content.decode(ProductRequest.self)
+        let request = try req.content.decode(SyncFromSubsidiaryParameters.self)
         
         let query = Product.query(on: req.db)
             .filter(\.$subsidiary.$id == request.subsidiaryId)
@@ -90,7 +90,7 @@ struct ProductController: RouteCollection {
     }
 }
 
-struct ProductRequest: Content {
+struct SyncFromSubsidiaryParameters: Content {
     let subsidiaryId: UUID
     let updatedSince: Date
 }

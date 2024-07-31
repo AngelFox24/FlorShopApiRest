@@ -1,6 +1,48 @@
 import Fluent
 import Vapor
 
+enum SaleError: Error {
+    case alreadyExist
+}
+
+// Implementa el protocolo AbortError para proporcionar más información sobre el error
+extension SaleError: AbortError {
+    var status: HTTPResponseStatus {
+        switch self {
+        case .alreadyExist:
+            return .internalServerError
+        }
+    }
+
+    var reason: String {
+        switch self {
+        case .alreadyExist:
+            return "Ya hay una venta con el mismo ID"
+        }
+    }
+}
+
+enum SaleDetailError: Error {
+    case alreadyExist
+}
+
+// Implementa el protocolo AbortError para proporcionar más información sobre el error
+extension SaleDetailError: AbortError {
+    var status: HTTPResponseStatus {
+        switch self {
+        case .alreadyExist:
+            return .internalServerError
+        }
+    }
+
+    var reason: String {
+        switch self {
+        case .alreadyExist:
+            return "Ya hay una detalle de venta con el mismo ID"
+        }
+    }
+}
+
 struct SaleController: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
         let sales = routes.grouped("sales")
@@ -12,52 +54,23 @@ struct SaleController: RouteCollection {
         try await Sale.query(on: req.db).all().mapToListSaleDTO()
     }
     
-//    func create(req: Request) throws -> EventLoopFuture<HTTPStatus> {
-//        let saleDTO = try req.content.decode(SaleDTO.self)
-//        let sale = Sale(id: saleDTO.id, paid: saleDTO.paid, paymentType: saleDTO.paymentType, saleDate: saleDTO.saleDate, total: saleDTO.total, subsidiaryID: saleDTO.subsidiaryId, customerID: saleDTO.customerId, employeeID: saleDTO.employeeId)
-//        return sale.save(on: req.db).flatMap { //Sincrono
-//            return req.eventLoop.flatten( //Asincrono
-//                saleDTO.saleDetail.map { saleDetailDTO in
-//                    let saleDetail = SaleDetail(id: saleDetailDTO.id, productName: saleDetailDTO.productName, quantitySold: saleDetailDTO.quantitySold, subtotal: saleDetailDTO.subtotal, unitCost: saleDetailDTO.unitCost, unitPrice: saleDetailDTO.unitPrice, saleID: saleDTO.id, imageUrlID: saleDetailDTO.imageUrlId)
-//                    return saleDetail.save(on: req.db)
-//                }
-//            ).transform(to: .ok)
-//        }.flatMapError { error in
-//            // Manejar el error aquí según tus necesidades.
-//            return req.eventLoop.makeFailedFuture(error)
-//        }
-//    }
-    
     func create(req: Request) async throws -> HTTPStatus {
         let saleDTO = try req.content.decode(SaleDTO.self)
-        let sale = Sale(
-            id: saleDTO.id,
-            paid: saleDTO.paid,
-            paymentType: saleDTO.paymentType,
-            saleDate: saleDTO.saleDate,
-            total: saleDTO.total,
-            subsidiaryID: saleDTO.subsidiaryId,
-            customerID: saleDTO.customerId,
-            employeeID: saleDTO.employeeId
-        )
-        let saleDetails = saleDTO.saleDetail.map { saleDetailDTO in
-            return SaleDetail(
-                id: saleDetailDTO.id,
-                productName: saleDetailDTO.productName,
-                barCode: saleDetailDTO.barCode,
-                quantitySold: saleDetailDTO.quantitySold,
-                subtotal: saleDetailDTO.subtotal,
-                unitType: saleDetailDTO.unitType,
-                unitCost: saleDetailDTO.unitCost,
-                unitPrice: saleDetailDTO.unitPrice,
-                saleID: saleDTO.id,
-                imageUrlID: saleDetailDTO.imageUrl?.id
-            )
-        }
+        let saleDetails = saleDTO.saleDetail.mapToListSaleDetail()
         return try await req.db.transaction { transaction in
-            try await sale.save(on: transaction)
-            for saleDetail in saleDetails {
-                try await saleDetail.save(on: transaction)
+            if try await Sale.find(saleDTO.id, on: transaction) != nil {
+                //Las Ventas no se modifican
+                throw SaleError.alreadyExist
+            } else {
+                try await saleDTO.toSale().save(on: transaction)
+                for saleDetail in saleDetails {
+                    if try await SaleDetail.find(saleDetail.id, on: transaction) != nil {
+                        //El detalle de las ventas no se modifican
+                        throw SaleDetailError.alreadyExist
+                    } else {
+                        try await saleDetail.save(on: transaction)
+                    }
+                }
             }
             return .ok
         }

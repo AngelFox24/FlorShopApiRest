@@ -80,7 +80,6 @@ extension Sale {
     func toSaleDTO() -> SaleDTO {
         return SaleDTO(
             id: id!,
-            paid: paid,
             paymentType: paymentType,
             saleDate: saleDate,
             total: total,
@@ -225,6 +224,7 @@ extension CustomerDTO {
             isDateLimitActive: isDateLimitActive,
             isDateLimit: isDateLimit,
             dateLimit: dateLimit,
+            firstDatePurchaseWithCredit: firstDatePurchaseWithCredit,
             lastDatePurchase: lastDatePurchase,
             phoneNumber: phoneNumber,
             creditLimit: creditLimit,
@@ -238,7 +238,6 @@ extension SaleDTO {
     func toSale() -> Sale {
         return Sale(
             id: id,
-            paid: paid,
             paymentType: paymentType,
             saleDate: saleDate,
             total: total,
@@ -304,5 +303,11 @@ extension Array where Element == Subsidiary {
 extension Array where Element == Sale {
     func mapToListSaleDTO() -> [SaleDTO] {
         return self.compactMap({$0.toSaleDTO()})
+    }
+}
+//MARK: Array of DTOs
+extension Array where Element == SaleDetailDTO {
+    func mapToListSaleDetail() -> [SaleDetail] {
+        return self.compactMap({$0.toSaleDetail()})
     }
 }

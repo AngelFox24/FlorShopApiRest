@@ -1,10 +1,3 @@
-//
-//  File.swift
-//  
-//
-//  Created by Angel Curi Laurente on 12/07/2024.
-//
-
 import Foundation
 import Vapor
 
