@@ -4,17 +4,9 @@ import Vapor
 struct SubsidiaryController: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
         let subsidiaries = routes.grouped("subsidiaries")
-        subsidiaries.get(use: index)
         subsidiaries.post("sync", use: sync)
         subsidiaries.get("byCompanyId", use: getByCompanyId)
         subsidiaries.post(use: save)
-    }
-    
-    func index(req: Request) async throws -> [SubsidiaryDTO] {
-        try await Subsidiary.query(on: req.db)
-            .with(\.$imageUrl)
-            .with(\.$company)
-            .all().mapToListSubsidiaryDTO()
     }
     func sync(req: Request) async throws -> [SubsidiaryDTO] {
         //Precicion de segundos solamente
@@ -46,7 +38,7 @@ struct SubsidiaryController: RouteCollection {
             .all().mapToListSubsidiaryDTO()
     }
     
-    func save(req: Request) async throws -> HTTPStatus {
+    func save(req: Request) async throws -> DefaultResponse {
         let subsidiaryDTO = try req.content.decode(SubsidiaryDTO.self)
         
         return try await req.db.transaction { transaction in
@@ -73,12 +65,7 @@ struct SubsidiaryController: RouteCollection {
                 let subsidiaryNew = subsidiaryDTO.toSubsidiary()
                 try await subsidiaryNew.save(on: transaction)
             }
-            return .ok
+            return DefaultResponse(code: 200, message: "Ok")
         }
     }
-}
-
-struct SyncFromCompanyParameters: Content {
-    let companyId: UUID
-    let updatedSince: Date
 }

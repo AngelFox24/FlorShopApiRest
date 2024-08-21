@@ -33,6 +33,7 @@ extension ImageUrl {
             id: id!,
             imageUrl: imageUrl,
             imageHash: imageHash,
+            imageData: nil,
             createdAt: createdAt,
             updatedAt: updatedAt
         )

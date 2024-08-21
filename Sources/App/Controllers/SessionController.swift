@@ -31,14 +31,3 @@ struct SessionController: RouteCollection {
         )
     }
 }
-
-struct LogInParameters: Content {
-    let username: String
-    let password: String
-}
-
-struct SessionConfig: Content {
-    let companyId: UUID
-    let subsidiaryId: UUID
-    let employeeId: UUID
-}

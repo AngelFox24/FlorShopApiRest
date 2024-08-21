@@ -46,15 +46,9 @@ extension SaleDetailError: AbortError {
 struct SaleController: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
         let sales = routes.grouped("sales")
-        sales.get(use: index)
         sales.post(use: create)
     }
-    
-    func index(req: Request) async throws -> [SaleDTO] {
-        try await Sale.query(on: req.db).all().mapToListSaleDTO()
-    }
-    
-    func create(req: Request) async throws -> HTTPStatus {
+    func create(req: Request) async throws -> DefaultResponse {
         let saleDTO = try req.content.decode(SaleDTO.self)
         let saleDetails = saleDTO.saleDetail.mapToListSaleDetail()
         return try await req.db.transaction { transaction in
@@ -72,7 +66,7 @@ struct SaleController: RouteCollection {
                     }
                 }
             }
-            return .ok
+            return DefaultResponse(code: 200, message: "Ok")
         }
     }
 }

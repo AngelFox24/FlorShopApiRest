@@ -4,14 +4,9 @@ import Vapor
 struct ProductController: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
         let products = routes.grouped("products")
-        products.get(use: index)
         products.post("sync", use: sync)
         products.post(use: save)
         products.post("bulkCreate", use: bulkCreate)
-    }
-    func index(req: Request) async throws -> [ProductDTO] {
-        //TODO: Pagination
-        try await Product.query(on: req.db).with(\.$imageUrl).all().mapToListProductDTO()
     }
     func sync(req: Request) async throws -> [ProductDTO] {
         //Precicion de segundos solamente
@@ -29,7 +24,7 @@ struct ProductController: RouteCollection {
         
         return products.mapToListProductDTO()
     }
-    func save(req: Request) async throws -> HTTPStatus {
+    func save(req: Request) async throws -> DefaultResponse {
         let productDTO = try req.content.decode(ProductDTO.self)
         
         return try await req.db.transaction { transaction in
@@ -63,11 +58,11 @@ struct ProductController: RouteCollection {
                 let productNew = productDTO.toProduct()
                 try await productNew.save(on: transaction)
             }
-            return .ok
+            return DefaultResponse(code: 200, message: "Ok")
         }
     }
     
-    func bulkCreate(req: Request) async throws -> HTTPStatus {
+    func bulkCreate(req: Request) async throws -> DefaultResponse {
         //No controla elementos repetidos osea Update
         let productsDTO = try req.content.decode([ProductDTO].self)
         
@@ -82,12 +77,7 @@ struct ProductController: RouteCollection {
                 let product = productDTO.toProduct()
                 try await product.save(on: transaction)
             }
-            return .ok // Todo se guardó exitosamente
+            return DefaultResponse(code: 200, message: "Ok")
         }
     }
-}
-
-struct SyncFromSubsidiaryParameters: Content {
-    let subsidiaryId: UUID
-    let updatedSince: Date
 }

@@ -9,6 +9,8 @@ public func configure(_ app: Application) async throws {
     // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
     app.http.server.configuration.hostname = "192.168.2.15"
     app.http.server.configuration.port = 8080
+    
+    app.routes.defaultMaxBodySize = "10mb"
 
     app.databases.use(DatabaseConfigurationFactory.postgres(configuration: .init(
         hostname: Environment.get("DATABASE_HOST") ?? "localhost",
