@@ -20,6 +20,7 @@ struct ImageUrlController: RouteCollection {
         return images.mapToListImageURLDTO()
     }
     func save(req: Request) async throws -> ImageURLDTO {
+        print("0: Nuevo XD")
         let imageUrlDto = try req.content.decode(ImageURLDTO.self)
         if let imageData = imageUrlDto.imageData { //Si hay imageData entonces guardara imagen local
             guard imageUrlDto.imageHash != "" else {
@@ -32,20 +33,21 @@ struct ImageUrlController: RouteCollection {
                 print("1: Se encontro por Url")
                 return imageUrl.toImageUrlDTO()
             } else {
-                print("1: Se Creara")
+                print("1: Se Creara que mrd")
                 //Create
                 let imageUrlNew = ImageUrl(
                     id: imageUrlDto.id,
                     imageUrl: getDomainUrl() + imageUrlDto.id.uuidString,
                     imageHash: imageUrlDto.imageHash
                 )
-                try await imageUrlNew.save(on: req.db)
                 print("Id de la imagen creada: \(String(describing: imageUrlNew.id))")
                 //Crear nueva ImagenUrl
                 if !fileExists(id: imageUrlNew.id!) {
+                    print("Se guardara en local")
                     //Save imageData in localStorage
                     try createFile(id: imageUrlNew.id!, imageData: imageData)
                 }
+                try await imageUrlNew.save(on: req.db)
                 return imageUrlNew.toImageUrlDTO()
             }
         } else if imageUrlDto.imageUrl != "" { //Si no hay imageData debe tener URL
@@ -78,7 +80,7 @@ struct ImageUrlController: RouteCollection {
         return filePath
     }
     private func getImageFolderPath() -> String {
-        return "/var/local/"
+        return "/app/images/"
     }
     private func getDomainUrl() -> String {
         return "http://192.168.2.15:8080/"
@@ -86,7 +88,9 @@ struct ImageUrlController: RouteCollection {
     private func fileExists(id: UUID) -> Bool {
         let fileManager = FileManager.default
         let filePath = getDomainUrl() + id.uuidString
-        return fileManager.fileExists(atPath: filePath)
+        let result = fileManager.fileExists(atPath: filePath)
+        print("Se esta verificado que exista la imagen: \(result)")
+        return result
     }
     private func createFile(id: UUID, imageData: Data) throws {
         // Crear el directorio si no existe
