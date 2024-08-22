@@ -2,8 +2,9 @@ import Foundation
 import Vapor
 
 struct CartDetailDTO: Content {
-    let id: UUID
+//    let id: UUID
     let quantity: Int
     let subtotal: Int
-    let product: ProductDTO
+    let productId: UUID
+//    let product: ProductDTO
 }

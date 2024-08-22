@@ -26,20 +26,6 @@ struct ProductController: RouteCollection {
     }
     func save(req: Request) async throws -> DefaultResponse {
         let productDTO = try req.content.decode(ProductDTO.self)
-        
-//        return try await req.db.transaction { transaction in
-//            if let imageURLDTO = productDTO.imageUrl {
-//                if let imageUrl = try await ImageUrl.find(imageURLDTO.id, on: transaction) {
-//                    //Update
-//                    imageUrl.imageUrl = imageURLDTO.imageUrl
-//                    imageUrl.imageHash = imageURLDTO.imageHash
-//                    try await imageUrl.update(on: transaction)
-//                } else {
-//                    //Create
-//                    let imageUrlNew = imageURLDTO.toImageUrl()
-//                    try await imageUrlNew.save(on: transaction)
-//                }
-//            }
             if let product = try await Product.find(productDTO.id, on: req.db) {
                 //Update
                 product.productName = productDTO.productName
@@ -53,6 +39,9 @@ struct ProductController: RouteCollection {
 //                product.$subsidiary.id = productDTO.subsidiaryId
                 product.$imageUrl.id = productDTO.imageUrlId //Solo se registra Id porque la imagen se guarda en ImageUrlController
                 try await product.update(on: req.db)
+            } else if try await productExist(productDTO: productDTO, db: req.db) {
+                print("El producto ya existe")
+                throw Abort(.badRequest, reason: "El producto ya existe")
             } else {
                 //Create
                 let productNew = productDTO.toProduct()
@@ -61,7 +50,21 @@ struct ProductController: RouteCollection {
             return DefaultResponse(code: 200, message: "Ok")
 //        }
     }
-    
+    private func productExist(productDTO: ProductDTO, db: any Database) async throws -> Bool {
+        let productName = productDTO.productName
+        let barCode = productDTO.barCode
+        let query = try await Product.query(on: db)
+            .group(.or) { orGroup in
+                orGroup.filter(\.$productName == productName)
+                    .filter(\.$barCode == barCode)
+            }
+            .first()
+        if query != nil {
+            return true
+        } else {
+            return false
+        }
+    }
     func bulkCreate(req: Request) async throws -> DefaultResponse {
         //No controla elementos repetidos osea Update
         let productsDTO = try req.content.decode([ProductDTO].self)

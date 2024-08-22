@@ -129,7 +129,7 @@ struct SaleController: RouteCollection {
     func save(req: Request) async throws -> DefaultResponse {
         let saleTransactionDTO = try req.content.decode(SaleTransactionDTO.self)
         let date: Date = Date()
-        guard saleTransactionDTO.cart.cartDetails.isEmpty else {
+        guard !saleTransactionDTO.cart.cartDetails.isEmpty else {
             print("No se encontro productos en la solicitud de venta")
             throw Abort(.badRequest, reason: "No se encontro productos en la solicitud de venta")
         }
@@ -137,18 +137,42 @@ struct SaleController: RouteCollection {
             print("El tipo de Pago no existe")
             throw Abort(.badRequest, reason: "El tipo de Pago no existe")
         }
-        let saleId = UUID()
-        let saleNew = Sale(
-            id: saleId,
-            paymentType: paymentType.description,
-            saleDate: date,
-            total: saleTransactionDTO.cart.total,
-            subsidiaryID: saleTransactionDTO.subsidiaryId,
-            customerID: saleTransactionDTO.customerId,
-            employeeID: saleTransactionDTO.employeeId
-        )
         //Agregamos detalles a la venta
         try await req.db.transaction { transaction in
+            let saleId = UUID()
+            let saleNew = Sale(
+                id: saleId,
+                paymentType: paymentType.description,
+                saleDate: date,
+                total: saleTransactionDTO.cart.total,
+                subsidiaryID: saleTransactionDTO.subsidiaryId,
+                customerID: saleTransactionDTO.customerId,
+                employeeID: saleTransactionDTO.employeeId
+            )
+            try await saleNew.save(on: transaction)
+            var totalOwn = 0
+            for cartDetailDTO in saleTransactionDTO.cart.cartDetails {
+                let product = try await reduceStock(cartDetailDTO: cartDetailDTO, db: transaction)
+                try await product.update(on: transaction)
+                let saleDetailNew = SaleDetail(
+                    id: UUID(),
+                    productName: product.productName,
+                    barCode: product.barCode,
+                    quantitySold: cartDetailDTO.quantity,
+                    subtotal: cartDetailDTO.subtotal,
+                    unitType: product.unitType, //Enum
+                    unitCost: product.unitCost,
+                    unitPrice: product.unitPrice,
+                    saleID: saleId,
+                    imageUrlID: product.imageUrl?.id
+                )
+                try await saleDetailNew.save(on: transaction)
+                totalOwn += cartDetailDTO.quantity * product.unitPrice
+            }
+            guard totalOwn == saleTransactionDTO.cart.total else {
+                print("Monto no coincide con el calculo de la BD, calculo real: \(totalOwn) calculo enviado: \(saleTransactionDTO.cart.total)")
+                throw Abort(.badRequest, reason: "Monto no coincide con el calculo de la BD, calculo real: \(totalOwn) calculo enviado: \(saleTransactionDTO.cart.total)")
+            }
             if let customer = try await Customer.find(saleTransactionDTO.customerId, on: transaction) {
                 customer.lastDatePurchase = date
                 if customer.totalDebt == 0 {
@@ -165,31 +189,19 @@ struct SaleController: RouteCollection {
                         customer.isCreditLimit = false
                     }
                 }
-                try await customer.save(on: transaction)
+                try await customer.update(on: transaction)
             }
-            for cartDetailDTO in saleTransactionDTO.cart.cartDetails {
-                let product = try await reduceStock(cartDetailDTO: cartDetailDTO, db: transaction)
-                try await product.save(on: transaction)
-                let saleDetailNew = SaleDetail(
-                    id: UUID(),
-                    productName: cartDetailDTO.product.productName,
-                    barCode: cartDetailDTO.product.barCode,
-                    quantitySold: cartDetailDTO.quantity,
-                    subtotal: cartDetailDTO.subtotal,
-                    unitType: cartDetailDTO.product.unitType, //Enum
-                    unitCost: cartDetailDTO.product.unitCost,
-                    unitPrice: cartDetailDTO.product.unitPrice,
-                    saleID: saleId,
-                    imageUrlID: cartDetailDTO.product.imageUrlId
-                )
-                try await saleDetailNew.save(on: transaction)
-            }
-            try await saleNew.save(on: transaction)
         }
         return DefaultResponse(code: 200, message: "Ok")
     }
+//    private func correctAmount(saleTransactionDTO: SaleTransactionDTO, db: any Database) async throws -> Bool {
+//        let cartDTO = saleTransactionDTO.cart
+//        for cartDetailDTO in cartDTO.cartDetails {
+//            
+//        }
+//    }
     private func reduceStock(cartDetailDTO: CartDetailDTO, db: any Database) async throws -> Product {
-        guard let product = try await Product.find(cartDetailDTO.product.id, on: db) else {
+        guard let product = try await Product.find(cartDetailDTO.productId, on: db) else {
             print("No se encontro este producto en la BD")
             throw Abort(.badRequest, reason: "No se encontro este producto en la BD")
         }

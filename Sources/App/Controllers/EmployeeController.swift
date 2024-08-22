@@ -36,11 +36,27 @@ struct EmployeeController: RouteCollection {
 //                employee.$subsidiary.id = productDTO.subsidiaryId
             employee.$imageUrl.id = employeeDTO.imageUrlId //Solo se registra Id porque la imagen se guarda en ImageUrlController
             try await employee.update(on: req.db)
+        } else if try await employeeExist(employeeDTO: employeeDTO, db: req.db) {
+            print("El empleado ya existe")
+            throw Abort(.badRequest, reason: "El empleado ya existe")
         } else {
             //Create
             let employeeNew = employeeDTO.toEmployee()
             try await employeeNew.save(on: req.db)
         }
         return DefaultResponse(code: 200, message: "Ok")
+    }
+    private func employeeExist(employeeDTO: EmployeeDTO, db: any Database) async throws -> Bool {
+        let name = employeeDTO.name
+        let lastName = employeeDTO.lastName
+        let query = try await Employee.query(on: db)
+            .filter(\.$name >= name)
+            .filter(\.$lastName >= lastName)
+            .first()
+        if query != nil {
+            return true
+        } else {
+            return false
+        }
     }
 }
