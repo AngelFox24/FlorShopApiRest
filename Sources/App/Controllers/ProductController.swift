@@ -27,20 +27,20 @@ struct ProductController: RouteCollection {
     func save(req: Request) async throws -> DefaultResponse {
         let productDTO = try req.content.decode(ProductDTO.self)
         
-        return try await req.db.transaction { transaction in
-            if let imageURLDTO = productDTO.imageUrl {
-                if let imageUrl = try await ImageUrl.find(imageURLDTO.id, on: transaction) {
-                    //Update
-                    imageUrl.imageUrl = imageURLDTO.imageUrl
-                    imageUrl.imageHash = imageURLDTO.imageHash
-                    try await imageUrl.update(on: transaction)
-                } else {
-                    //Create
-                    let imageUrlNew = imageURLDTO.toImageUrl()
-                    try await imageUrlNew.save(on: transaction)
-                }
-            }
-            if let product = try await Product.find(productDTO.id, on: transaction) {
+//        return try await req.db.transaction { transaction in
+//            if let imageURLDTO = productDTO.imageUrl {
+//                if let imageUrl = try await ImageUrl.find(imageURLDTO.id, on: transaction) {
+//                    //Update
+//                    imageUrl.imageUrl = imageURLDTO.imageUrl
+//                    imageUrl.imageHash = imageURLDTO.imageHash
+//                    try await imageUrl.update(on: transaction)
+//                } else {
+//                    //Create
+//                    let imageUrlNew = imageURLDTO.toImageUrl()
+//                    try await imageUrlNew.save(on: transaction)
+//                }
+//            }
+            if let product = try await Product.find(productDTO.id, on: req.db) {
                 //Update
                 product.productName = productDTO.productName
                 product.barCode = productDTO.barCode
@@ -51,15 +51,15 @@ struct ProductController: RouteCollection {
                 product.unitCost = productDTO.unitCost
                 product.unitPrice = productDTO.unitPrice
 //                product.$subsidiary.id = productDTO.subsidiaryId
-                product.$imageUrl.id = productDTO.imageUrl?.id
-                try await product.update(on: transaction)
+                product.$imageUrl.id = productDTO.imageUrlId //Solo se registra Id porque la imagen se guarda en ImageUrlController
+                try await product.update(on: req.db)
             } else {
                 //Create
                 let productNew = productDTO.toProduct()
-                try await productNew.save(on: transaction)
+                try await productNew.save(on: req.db)
             }
             return DefaultResponse(code: 200, message: "Ok")
-        }
+//        }
     }
     
     func bulkCreate(req: Request) async throws -> DefaultResponse {
@@ -70,10 +70,10 @@ struct ProductController: RouteCollection {
         return try await req.db.transaction { transaction in
             // Iterar sobre cada producto y guardarlo
             for productDTO in productsDTO {
-                let imageUrlDTO = productDTO.imageUrl
-                if let imageUrl = imageUrlDTO?.toImageUrl() {
-                    try await imageUrl.save(on: transaction)
-                }
+                let imageUrlDTO = productDTO.imageUrlId
+//                if let imageUrl = imageUrlDTO?.toImageUrl() {
+//                    try await imageUrl.save(on: transaction)
+//                }
                 let product = productDTO.toProduct()
                 try await product.save(on: transaction)
             }

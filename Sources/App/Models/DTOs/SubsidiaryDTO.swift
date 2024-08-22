@@ -12,7 +12,7 @@ struct SubsidiaryDTO: Content {
     let id: UUID
     let name: String
     let companyID: UUID
-    let imageUrl: ImageURLDTO?
+    let imageUrlId: UUID?
     let createdAt: Date?
     let updatedAt: Date?
 }

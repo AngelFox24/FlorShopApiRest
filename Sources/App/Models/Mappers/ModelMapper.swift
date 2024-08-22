@@ -20,7 +20,7 @@ extension Product {
             unitCost: unitCost,
             unitPrice: unitPrice,
             subsidiaryId: self.$subsidiary.id,
-            imageUrl: imageUrl?.toImageUrlDTO(),
+            imageUrlId: imageUrl?.id,
             createdAt: createdAt,
             updatedAt: updatedAt
         )
@@ -70,7 +70,7 @@ extension Customer {
             phoneNumber: phoneNumber,
             creditLimit: creditLimit,
             companyID: self.$company.id,
-            imageUrl: imageUrl?.toImageUrlDTO(),
+            imageUrlId: imageUrl?.id,
             createdAt: createdAt,
             updatedAt: updatedAt
         )
@@ -106,7 +106,7 @@ extension SaleDetail {
             unitCost: unitCost,
             unitPrice: unitPrice,
             saleID: self.$sale.id,
-            imageUrl: imageUrl?.toImageUrlDTO(),
+            imageUrlId: imageUrl?.id,
             createdAt: createdAt,
             updatedAt: updatedAt
         )
@@ -119,7 +119,7 @@ extension Subsidiary {
             id: id!,
             name: name,
             companyID: self.$company.id,
-            imageUrl: imageUrl?.toImageUrlDTO(),
+            imageUrlId: imageUrl?.id,
             createdAt: createdAt,
             updatedAt: updatedAt
         )
@@ -138,7 +138,7 @@ extension Employee {
             role: role,
             active: active,
             subsidiaryID: self.$subsidiary.id,
-            imageUrl: imageUrl?.toImageUrlDTO(),
+            imageUrlId: imageUrl?.id,
             createdAt: createdAt,
             updatedAt: updatedAt
         )
@@ -158,7 +158,7 @@ extension ProductDTO {
             unitCost: unitCost,
             unitPrice: unitPrice,
             subsidiaryID: subsidiaryId,
-            imageUrlID: imageUrl?.id
+            imageUrlID: imageUrlId
         )
     }
 }
@@ -169,7 +169,7 @@ extension SubsidiaryDTO {
             id: id,
             name: name,
             companyID: companyID,
-            imageUrlID: imageUrl?.id
+            imageUrlID: imageUrlId
         )
     }
 }
@@ -206,7 +206,7 @@ extension EmployeeDTO {
             role: role,
             active: active,
             subsidiaryID: subsidiaryID,
-            imageUrlID: imageUrl?.id
+            imageUrlID: imageUrlId
         )
     }
 }
@@ -230,7 +230,7 @@ extension CustomerDTO {
             phoneNumber: phoneNumber,
             creditLimit: creditLimit,
             companyID: companyID,
-            imageUrlID: imageUrl?.id
+            imageUrlID: imageUrlId
         )
     }
 }
@@ -261,7 +261,7 @@ extension SaleDetailDTO {
             unitCost: unitCost,
             unitPrice: unitPrice,
             saleID: saleID,
-            imageUrlID: imageUrl?.id
+            imageUrlID: imageUrlId
         )
     }
 }

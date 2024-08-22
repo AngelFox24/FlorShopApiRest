@@ -1,6 +1,5 @@
 import Fluent
 import Vapor
-
 struct SessionController: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
         let session = routes.grouped("session")

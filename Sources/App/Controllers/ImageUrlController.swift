@@ -1,6 +1,5 @@
 import Fluent
 import Vapor
-//MARK: Not Visible
 struct ImageUrlController: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
         let imageUrl = routes.grouped("imageUrls")
@@ -20,8 +19,8 @@ struct ImageUrlController: RouteCollection {
         return images.mapToListImageURLDTO()
     }
     func save(req: Request) async throws -> ImageURLDTO {
-        print("0: Nuevo XD")
         let imageUrlDto = try req.content.decode(ImageURLDTO.self)
+        //No se permite edicion de ImagenUrl, en todo caso crear uno nuevo
         if let imageData = imageUrlDto.imageData { //Si hay imageData entonces guardara imagen local
             guard imageUrlDto.imageHash != "" else {
                 throw Abort(.badRequest, reason: "Se debe proporcionar el hash")
@@ -57,7 +56,7 @@ struct ImageUrlController: RouteCollection {
             if let imageUrl = try await ImageUrl.find(imageUrlDto.id, on: req.db) {//No actualizamos nada si busca por id
                 print("2: Se encontro por Id")
                 return imageUrl.toImageUrlDTO()
-            } else if let imageUrl = try await getImageUrlByHash(hash: imageUrlDto.imageHash, req: req) {
+            } else if imageUrlDto.imageHash != "", let imageUrl = try await getImageUrlByHash(hash: imageUrlDto.imageHash, req: req) {
                 print("2: Se encontro por hash")
                 return imageUrl.toImageUrlDTO()
             } else if let imageUrl = try await getImageUrlByUrl(url: imageUrlDto.imageUrl, req: req) {

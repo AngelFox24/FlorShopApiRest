@@ -40,32 +40,18 @@ struct SubsidiaryController: RouteCollection {
     
     func save(req: Request) async throws -> DefaultResponse {
         let subsidiaryDTO = try req.content.decode(SubsidiaryDTO.self)
-        
-        return try await req.db.transaction { transaction in
-            if let imageURLDTO = subsidiaryDTO.imageUrl {
-                if let imageUrl = try await ImageUrl.find(imageURLDTO.id, on: transaction) {
-                    //Update
-                    imageUrl.imageUrl = imageURLDTO.imageUrl
-                    imageUrl.imageHash = imageURLDTO.imageHash
-                    try await imageUrl.update(on: transaction)
-                } else {
-                    //Create
-                    let imageUrlNew = imageURLDTO.toImageUrl()
-                    try await imageUrlNew.save(on: transaction)
-                }
-            }
-            if let subsidiary = try await Subsidiary.find(subsidiaryDTO.id, on: transaction) {
-                //Update
-                subsidiary.name = subsidiaryDTO.name
-                subsidiary.$company.id = subsidiaryDTO.companyID
-                subsidiary.$imageUrl.id = subsidiaryDTO.imageUrl?.id
-                try await subsidiary.update(on: transaction)
-            } else {
-                //Create
-                let subsidiaryNew = subsidiaryDTO.toSubsidiary()
-                try await subsidiaryNew.save(on: transaction)
-            }
-            return DefaultResponse(code: 200, message: "Ok")
+        //Las imagenes se guardan por separado
+        if let subsidiary = try await Subsidiary.find(subsidiaryDTO.id, on: req.db) {
+            //Update
+            subsidiary.name = subsidiaryDTO.name
+            subsidiary.$company.id = subsidiaryDTO.companyID
+            subsidiary.$imageUrl.id = subsidiaryDTO.imageUrlId
+            try await subsidiary.update(on: req.db)
+        } else {
+            //Create
+            let subsidiaryNew = subsidiaryDTO.toSubsidiary()
+            try await subsidiaryNew.save(on: req.db)
         }
+        return DefaultResponse(code: 200, message: "Ok")
     }
 }
