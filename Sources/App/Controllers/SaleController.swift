@@ -201,7 +201,12 @@ struct SaleController: RouteCollection {
 //        }
 //    }
     private func reduceStock(cartDetailDTO: CartDetailDTO, db: any Database) async throws -> Product {
-        guard let product = try await Product.find(cartDetailDTO.productId, on: db) else {
+        let productEntity = try await Product.query(on: db)
+            .filter(\.$id == cartDetailDTO.productId)
+            .sort(\.$updatedAt, .ascending)
+            .with(\.$imageUrl)
+            .limit(1).first()
+        guard let product = productEntity else {
             print("No se encontro este producto en la BD")
             throw Abort(.badRequest, reason: "No se encontro este producto en la BD")
         }

@@ -8,7 +8,9 @@ struct SaleDetailController: RouteCollection {
         saleDetails.get(use: index)
     }
     func index(req: Request) async throws -> [SaleDetailDTO] {
-        return []
-//        try await SaleDetail.query(on: req.db).all().mapToListSaleDetailDTO()
+//        return []
+        try await SaleDetail.query(on: req.db)
+            .with(\.$imageUrl)
+            .all().mapToListSaleDetailDTO()
     }
 }
