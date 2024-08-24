@@ -20,7 +20,7 @@ struct ImageUrlController: RouteCollection {
         return images.mapToListImageURLDTO()
     }
     func serveImage(req: Request) throws -> Response {
-        print("New service OK")
+        print("New service OK 2.0")
         // Extraer el UUID de la URL
         guard let imageIdS = req.parameters.get("imageId") else {
             throw Abort(.badRequest, reason: "No image ID provided")
@@ -104,9 +104,9 @@ struct ImageUrlController: RouteCollection {
     }
     private func fileExists(id: UUID) -> Bool {
         let fileManager = FileManager.default
-        let filePath = getImageFolderPath() + id.uuidString
+        let filePath = getImageFolderPath() + id.uuidString + ".jpg"
         let result = fileManager.fileExists(atPath: filePath)
-        print("Se esta verificado que exista la imagen: \(result)")
+        print("Se esta verificado que exista la imagen: \(result) file: \(filePath)")
         return result
     }
     private func createFile(id: UUID, imageData: Data) throws {
