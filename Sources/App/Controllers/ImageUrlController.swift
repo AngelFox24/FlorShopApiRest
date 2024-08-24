@@ -54,7 +54,7 @@ struct ImageUrlController: RouteCollection {
                 //Create
                 let imageUrlNew = ImageUrl(
                     id: imageUrlDto.id,
-                    imageUrl: getDomainUrl() + imageUrlDto.id.uuidString,
+                    imageUrl: getDomainUrl() + "imageUrls/" + imageUrlDto.id.uuidString,
                     imageHash: imageUrlDto.imageHash
                 )
                 print("Id de la imagen creada: \(String(describing: imageUrlNew.id))")
@@ -104,7 +104,7 @@ struct ImageUrlController: RouteCollection {
     }
     private func fileExists(id: UUID) -> Bool {
         let fileManager = FileManager.default
-        let filePath = getDomainUrl() + id.uuidString
+        let filePath = getImageFolderPath() + id.uuidString
         let result = fileManager.fileExists(atPath: filePath)
         print("Se esta verificado que exista la imagen: \(result)")
         return result
