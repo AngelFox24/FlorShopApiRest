@@ -4,6 +4,7 @@ struct ImageUrlController: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
         let imageUrl = routes.grouped("imageUrls")
         imageUrl.post("sync", use: sync)
+        imageUrl.get(":imageId", use: serveImage)
         imageUrl.post(use: save)
     }
     func sync(req: Request) async throws -> [ImageURLDTO] {
@@ -17,6 +18,23 @@ struct ImageUrlController: RouteCollection {
         let images = try await query.all()
         
         return images.mapToListImageURLDTO()
+    }
+    func serveImage(req: Request) throws -> Response {
+        print("New service OK")
+        // Extraer el UUID de la URL
+        guard let imageIdS = req.parameters.get("imageId") else {
+            throw Abort(.badRequest, reason: "No image ID provided")
+        }
+        guard let imageId = UUID(uuidString: imageIdS) else {
+            throw Abort(.badRequest, reason: "El id es invalido")
+        }
+        guard fileExists(id: imageId) else {
+            throw Abort(.notFound, reason: "Image not found")
+        }
+        // Ruta donde se almacenan las imágenes en el servidor
+        let imageDirectory = getPathById(id: imageId)
+        // Crear la respuesta con el contenido de la imagen
+        return req.fileio.streamFile(at: imageDirectory)
     }
     func save(req: Request) async throws -> ImageURLDTO {
         let imageUrlDto = try req.content.decode(ImageURLDTO.self)
