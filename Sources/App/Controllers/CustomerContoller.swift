@@ -27,33 +27,37 @@ struct CustomerContoller: RouteCollection {
         let customerDTO = try req.content.decode(CustomerDTO.self)
         if let customer = try await Customer.find(customerDTO.id, on: req.db) {
             //Update
-            customer.name = customerDTO.name
-            customer.lastName = customerDTO.lastName
+            if customer.name != customerDTO.name || customer.lastName != customerDTO.lastName {
+                guard try await !customerFullNameExist(customerDTO: customerDTO, db: req.db) else {
+                    throw Abort(.badRequest, reason: "El nombre y apellido del cliente ya existe")
+                }
+                customer.name = customerDTO.name
+                customer.lastName = customerDTO.lastName
+            }
             customer.creditDays = customerDTO.creditDays
             customer.creditLimit = customerDTO.creditLimit
             customer.isCreditLimitActive = customerDTO.isCreditLimitActive
             customer.isDateLimitActive = customerDTO.isDateLimitActive
             customer.phoneNumber = customerDTO.phoneNumber
-            customer.$company.id = customerDTO.companyID
-            customer.$imageUrl.id = customerDTO.imageUrlId //Solo se registra Id porque la imagen se guarda en ImageUrlController
-            if customerDTO.isDateLimitActive && customer.totalDebt > 0 && customer.firstDatePurchaseWithCredit != nil {
+            customer.$imageUrl.id = try await ImageUrl.find(customerDTO.imageUrlId, on: req.db)?.id //Solo se registra Id porque la imagen se guarda en ImageUrlController
+            if customerDTO.isDateLimitActive && customer.totalDebt > 0, let firstDatePurchaseWithCredit = customer.firstDatePurchaseWithCredit {
                 var calendar = Calendar.current
                 calendar.timeZone = TimeZone(identifier: "UTC")!
-                customer.dateLimit = calendar.date(byAdding: .day, value: customer.creditDays, to: customer.firstDatePurchaseWithCredit!)!
+                customer.dateLimit = calendar.date(byAdding: .day, value: customer.creditDays, to: firstDatePurchaseWithCredit)!
                 let finalDelDia = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: Date())!
                 customer.isDateLimit = customer.dateLimit < finalDelDia
             }
-            if customer.isCreditLimitActive {
-                customer.isCreditLimit = customer.totalDebt >= customer.creditLimit
-            } else {
-                customer.isCreditLimit = false
-            }
+            customer.isCreditLimit = customer.isCreditLimitActive ? customer.totalDebt >= customer.creditLimit : false
             try await customer.update(on: req.db)
-        } else if try await customerExist(customerDTO: customerDTO, db: req.db) {
-            print("El cliente ya existe")
-            throw Abort(.badRequest, reason: "El cliente ya existe")
+            return DefaultResponse(code: 200, message: "Updated")
         } else {
             //Create
+            guard let companyID = try await Company.find(customerDTO.companyID, on: req.db)?.id else {
+                throw Abort(.badRequest, reason: "La compañia no existe")
+            }
+            guard try await !customerFullNameExist(customerDTO: customerDTO, db: req.db) else {
+                throw Abort(.badRequest, reason: "El nombre y apellido del cliente ya existe")
+            }
             let customerNew = Customer(
                 id: customerDTO.id,
                 name: customerDTO.name,
@@ -70,12 +74,12 @@ struct CustomerContoller: RouteCollection {
                 lastDatePurchase: customerDTO.lastDatePurchase,
                 phoneNumber: customerDTO.phoneNumber,
                 creditLimit: customerDTO.creditLimit,
-                companyID: customerDTO.companyID,
-                imageUrlID: customerDTO.imageUrlId
+                companyID: companyID,
+                imageUrlID: try await ImageUrl.find(customerDTO.imageUrlId, on: req.db)?.id
             )
             try await customerNew.save(on: req.db)
+            return DefaultResponse(code: 200, message: "Created")
         }
-        return DefaultResponse(code: 200, message: "Ok")
     }
     func payDebt(req: Request) async throws -> PayCustomerDebt {
         let payCustomerDebt = try req.content.decode(PayCustomerDebt.self)
@@ -120,7 +124,7 @@ struct CustomerContoller: RouteCollection {
             .sort(\.$createdAt, .ascending)
             .all()
     }
-    private func customerExist(customerDTO: CustomerDTO, db: any Database) async throws -> Bool {
+    private func customerFullNameExist(customerDTO: CustomerDTO, db: any Database) async throws -> Bool {
         let name = customerDTO.name
         let lastName = customerDTO.lastName
         let query = try await Customer.query(on: db)

@@ -7,7 +7,7 @@ import Vapor
 public func configure(_ app: Application) async throws {
     // uncomment to serve files from /Public folder
     // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
-    app.http.server.configuration.hostname = "192.168.2.15"
+    app.http.server.configuration.hostname = "192.168.2.13" //Server Ubuntu
     app.http.server.configuration.port = 8080
     
     app.routes.defaultMaxBodySize = "10mb"

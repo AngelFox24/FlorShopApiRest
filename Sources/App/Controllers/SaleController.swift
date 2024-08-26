@@ -137,17 +137,30 @@ struct SaleController: RouteCollection {
             print("El tipo de Pago no existe")
             throw Abort(.badRequest, reason: "El tipo de Pago no existe")
         }
+        guard let subsidiaryId = try await Subsidiary.find(saleTransactionDTO.subsidiaryId, on: req.db)?.id else {
+            throw Abort(.badRequest, reason: "La subsidiaria no existe")
+        }
+        guard let employeeId = try await Employee.find(saleTransactionDTO.employeeId, on: req.db)?.id else {
+            throw Abort(.badRequest, reason: "El empleado no existe")
+        }
         //Agregamos detalles a la venta
         try await req.db.transaction { transaction in
+            var customerEntityPN: Customer?
+            if let customerId = saleTransactionDTO.customerId {//Si quiere registrar un cliente este debe existir sino no se puede registrar la venta
+                guard let customerEntity = try await Customer.find(customerId, on: transaction) else {
+                    throw Abort(.badRequest, reason: "El cliente no existe")
+                }
+                customerEntityPN = customerEntity
+            }
             let saleId = UUID()
             let saleNew = Sale(
                 id: saleId,
                 paymentType: paymentType.description,
                 saleDate: date,
                 total: saleTransactionDTO.cart.total,
-                subsidiaryID: saleTransactionDTO.subsidiaryId,
-                customerID: saleTransactionDTO.customerId,
-                employeeID: saleTransactionDTO.employeeId
+                subsidiaryID: subsidiaryId,
+                customerID: customerEntityPN?.id,
+                employeeID: employeeId
             )
             try await saleNew.save(on: transaction)
             var totalOwn = 0
@@ -173,26 +186,26 @@ struct SaleController: RouteCollection {
                 print("Monto no coincide con el calculo de la BD, calculo real: \(totalOwn) calculo enviado: \(saleTransactionDTO.cart.total)")
                 throw Abort(.badRequest, reason: "Monto no coincide con el calculo de la BD, calculo real: \(totalOwn) calculo enviado: \(saleTransactionDTO.cart.total)")
             }
-            if let customer = try await Customer.find(saleTransactionDTO.customerId, on: transaction) {
-                customer.lastDatePurchase = date
-                if customer.totalDebt == 0 {
+            if let customerEntity = customerEntityPN {
+                customerEntity.lastDatePurchase = date
+                if customerEntity.totalDebt == 0 {
                     var calendario = Calendar.current
                     calendario.timeZone = TimeZone(identifier: "UTC")!
-                    customer.dateLimit = calendario.date(byAdding: .day, value: customer.creditDays, to: date)!
+                    customerEntity.dateLimit = calendario.date(byAdding: .day, value: customerEntity.creditDays, to: date)!
                 }
                 if paymentType == .loan {
-                    customer.firstDatePurchaseWithCredit = customer.totalDebt == 0 ? date : customer.firstDatePurchaseWithCredit
-                    customer.totalDebt = customer.totalDebt + saleTransactionDTO.cart.total
-                    if customer.totalDebt > customer.creditLimit && customer.isCreditLimitActive {
-                        customer.isCreditLimit = true
+                    customerEntity.firstDatePurchaseWithCredit = customerEntity.totalDebt == 0 ? date : customerEntity.firstDatePurchaseWithCredit
+                    customerEntity.totalDebt = customerEntity.totalDebt + saleTransactionDTO.cart.total
+                    if customerEntity.totalDebt > customerEntity.creditLimit && customerEntity.isCreditLimitActive {
+                        customerEntity.isCreditLimit = true
                     } else {
-                        customer.isCreditLimit = false
+                        customerEntity.isCreditLimit = false
                     }
                 }
-                try await customer.update(on: transaction)
+                try await customerEntity.update(on: transaction)
             }
         }
-        return DefaultResponse(code: 200, message: "Ok")
+        return DefaultResponse(code: 200, message: "Created")
     }
 //    private func correctAmount(saleTransactionDTO: SaleTransactionDTO, db: any Database) async throws -> Bool {
 //        let cartDTO = saleTransactionDTO.cart

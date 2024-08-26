@@ -26,38 +26,83 @@ struct ProductController: RouteCollection {
     }
     func save(req: Request) async throws -> DefaultResponse {
         let productDTO = try req.content.decode(ProductDTO.self)
-            if let product = try await Product.find(productDTO.id, on: req.db) {
-                //Update
+        guard productDTO.productName != "" else {
+            throw Abort(.badRequest, reason: "El nombre del producto no puede ser vacio")
+        }
+        if let product = try await Product.find(productDTO.id, on: req.db) {
+            //Update
+            if product.productName != productDTO.productName {
+                guard try await !productNameExist(productDTO: productDTO, db: req.db) else {
+                    throw Abort(.badRequest, reason: "El nombre del producto ya existe")
+                }
                 product.productName = productDTO.productName
+            }
+            if product.barCode != productDTO.barCode {
+                guard try await !productBarCodeExist(productDTO: productDTO, db: req.db) else {
+                    throw Abort(.badRequest, reason: "El codigo de barras del producto ya existe")
+                }
                 product.barCode = productDTO.barCode
-                product.active = productDTO.active
-                product.expirationDate = productDTO.expirationDate
-                product.quantityStock = productDTO.quantityStock
-                product.unitType = productDTO.unitType
-                product.unitCost = productDTO.unitCost
-                product.unitPrice = productDTO.unitPrice
-//                product.$subsidiary.id = productDTO.subsidiaryId
-                product.$imageUrl.id = productDTO.imageUrlId //Solo se registra Id porque la imagen se guarda en ImageUrlController
-                try await product.update(on: req.db)
-            } else if try await productExist(productDTO: productDTO, db: req.db) {
-                print("El producto ya existe")
-                throw Abort(.badRequest, reason: "El producto ya existe")
-            } else {
-                //Create
-                let productNew = productDTO.toProduct()
-                try await productNew.save(on: req.db)
             }
-            return DefaultResponse(code: 200, message: "Ok")
-//        }
+            product.active = productDTO.active
+            product.expirationDate = productDTO.expirationDate
+            product.quantityStock = productDTO.quantityStock
+            product.unitType = productDTO.unitType
+            product.unitCost = productDTO.unitCost
+            product.unitPrice = productDTO.unitPrice
+            product.$imageUrl.id = try await ImageUrl.find(productDTO.imageUrlId, on: req.db)?.id
+            try await product.update(on: req.db)
+            return DefaultResponse(code: 200, message: "Updated")
+        } else {
+            guard let subsidiaryId = try await Subsidiary.find(productDTO.subsidiaryId, on: req.db)?.id else {
+                throw Abort(.badRequest, reason: "La subsidiaria no existe")
+            }
+            guard try await !productNameExist(productDTO: productDTO, db: req.db) else {
+                throw Abort(.badRequest, reason: "El nombre del producto ya existe")
+            }
+            guard try await !productBarCodeExist(productDTO: productDTO, db: req.db) else {
+                throw Abort(.badRequest, reason: "El codigo de barras del producto ya existe")
+            }
+            //Create
+            let productNew = Product(
+                id: UUID(),
+                productName: productDTO.productName,
+                barCode: productDTO.barCode,
+                active: productDTO.active,
+                expirationDate: productDTO.expirationDate,
+                unitType: productDTO.unitType,
+                quantityStock: productDTO.quantityStock,
+                unitCost: productDTO.unitCost,
+                unitPrice: productDTO.unitPrice,
+                subsidiaryID: subsidiaryId,
+                imageUrlID: try await ImageUrl.find(productDTO.imageUrlId, on: req.db)?.id
+            )
+            try await productNew.save(on: req.db)
+            return DefaultResponse(code: 200, message: "Created")
+        }
     }
-    private func productExist(productDTO: ProductDTO, db: any Database) async throws -> Bool {
-        let productName = productDTO.productName
-        let barCode = productDTO.barCode
+    private func productNameExist(productDTO: ProductDTO, db: any Database) async throws -> Bool {
+        guard productDTO.productName != "" else {
+            print("Producto existe vacio aunque no exista xd")
+            return true
+        }
         let query = try await Product.query(on: db)
-            .group(.or) { orGroup in
-                orGroup.filter(\.$productName == productName)
-                    .filter(\.$barCode == barCode)
-            }
+            .filter(\.$productName == productDTO.productName)
+            .limit(1)
+            .first()
+        if query != nil {
+            return true
+        } else {
+            return false
+        }
+    }
+    private func productBarCodeExist(productDTO: ProductDTO, db: any Database) async throws -> Bool {
+        guard productDTO.barCode != "" else {
+            print("Producto barcode vacio aunque no exista xd")
+            return false
+        }
+        let query = try await Product.query(on: db)
+            .filter(\.$barCode == productDTO.barCode)
+            .limit(1)
             .first()
         if query != nil {
             return true
