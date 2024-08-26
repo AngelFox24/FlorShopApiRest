@@ -39,7 +39,9 @@ struct ImageUrlController: RouteCollection {
     func save(req: Request) async throws -> ImageURLDTO {
         let imageUrlDto = try req.content.decode(ImageURLDTO.self)
         //No se permite edicion de ImagenUrl, en todo caso crear uno nuevo
-        if let imageData = imageUrlDto.imageData { //Si hay imageData entonces guardara imagen local
+        if let imageUrl = ImageUrl.find(imageUrlDto.id, on: req.db) {
+            return imageUrl.toImageUrlDTO()
+        } else if let imageData = imageUrlDto.imageData { //Si hay imageData entonces guardara imagen local
             guard imageUrlDto.imageHash != "" else {
                 throw Abort(.badRequest, reason: "Se debe proporcionar el hash")
             }
@@ -100,7 +102,7 @@ struct ImageUrlController: RouteCollection {
         return "/app/images/"
     }
     private func getDomainUrl() -> String {
-        return "http://192.168.2.15:8080/"
+        return "http://192.168.2.13:8080/"
     }
     private func fileExists(id: UUID) -> Bool {
         let fileManager = FileManager.default
