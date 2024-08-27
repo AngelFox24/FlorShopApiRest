@@ -39,7 +39,7 @@ struct ImageUrlController: RouteCollection {
     func save(req: Request) async throws -> ImageURLDTO {
         let imageUrlDto = try req.content.decode(ImageURLDTO.self)
         //No se permite edicion de ImagenUrl, en todo caso crear uno nuevo
-        if let imageUrl = ImageUrl.find(imageUrlDto.id, on: req.db) {
+        if let imageUrl = try await ImageUrl.find(imageUrlDto.id, on: req.db) {
             return imageUrl.toImageUrlDTO()
         } else if let imageData = imageUrlDto.imageData { //Si hay imageData entonces guardara imagen local
             guard imageUrlDto.imageHash != "" else {
@@ -65,6 +65,9 @@ struct ImageUrlController: RouteCollection {
                     print("Se guardara en local")
                     //Save imageData in localStorage
                     try createFile(id: imageUrlNew.id!, imageData: imageData)
+                    guard fileExists(id: imageUrlNew.id!) else {
+                        throw Abort(.badRequest, reason: "Se verifico que la imagen creada no existe")
+                    }
                 }
                 try await imageUrlNew.save(on: req.db)
                 return imageUrlNew.toImageUrlDTO()

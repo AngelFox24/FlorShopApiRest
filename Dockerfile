@@ -71,6 +71,9 @@ RUN useradd --user-group --create-home --system --skel /dev/null --home-dir /app
 # Crear el directorio con permisos adecuados
 RUN mkdir -p /app/images && chown vapor:vapor /app/images
 
+# Alternatively, using `install` for setting permissions while creating the directory
+RUN install -d -o vapor -g vapor /app/images
+
 # Switch to the new home directory
 WORKDIR /app
 
