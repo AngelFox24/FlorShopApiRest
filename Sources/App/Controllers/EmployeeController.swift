@@ -88,8 +88,8 @@ struct EmployeeController: RouteCollection {
         let name = employeeDTO.name
         let lastName = employeeDTO.lastName
         let query = try await Employee.query(on: db)
-            .filter(\.$name >= name)
-            .filter(\.$lastName >= lastName)
+            .filter(\.$name == name)
+            .filter(\.$lastName == lastName)
             .first()
         if query != nil {
             return true

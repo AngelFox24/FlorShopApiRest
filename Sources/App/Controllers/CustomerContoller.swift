@@ -128,8 +128,8 @@ struct CustomerContoller: RouteCollection {
         let name = customerDTO.name
         let lastName = customerDTO.lastName
         let query = try await Customer.query(on: db)
-            .filter(\.$name >= name)
-            .filter(\.$lastName >= lastName)
+            .filter(\.$name == name)
+            .filter(\.$lastName == lastName)
             .first()
         if query != nil {
             return true
