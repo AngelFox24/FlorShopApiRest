@@ -7,8 +7,6 @@ Esta API sirve como backend para una aplicación de tienda en línea, permitiend
 [![Swift](https://img.shields.io/badge/Swift-5.9-orange.svg?longCache=true&style=popout-square)](https://swift.org)
 [![Xcode](https://img.shields.io/badge/Xcode-12.5-blue.svg?longCache=true&style=popout-square)](https://developer.apple.com/xcode)
 
-* Es suficiente con ejecutar el archivo `Flor Shop.xcodeproj` en Xcode.
-
 ### ¿Que Características tiene la API?
 * Maneja una Base de Datos Postgres.
 * Diseñado con el popular framework VAPOR.
