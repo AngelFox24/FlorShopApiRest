@@ -10,7 +10,7 @@ import Vapor
 struct VerifySyncController: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
         let subsidiaries = routes.grouped("verifySync")
-        subsidiaries.get(use: getTokens)
+        subsidiaries.post(use: getTokens)
     }
     func getTokens(req: Request) async throws -> VerifySyncParameters {
         return SyncTimestamp.shared.getLastSyncDate()
