@@ -105,27 +105,6 @@ struct SaleController: RouteCollection {
         
         return sales.mapToListSaleDTO()
     }
-    func save2(req: Request) async throws -> DefaultResponse {
-        let saleDTO = try req.content.decode(SaleDTO.self)
-        let saleDetails = saleDTO.saleDetail.mapToListSaleDetail()
-        return try await req.db.transaction { transaction in
-            if try await Sale.find(saleDTO.id, on: transaction) != nil {
-                //Las Ventas no se modifican
-                throw SaleError.alreadyExist
-            } else {
-                try await saleDTO.toSale().save(on: transaction)
-                for saleDetail in saleDetails {
-                    if try await SaleDetail.find(saleDetail.id, on: transaction) != nil {
-                        //El detalle de las ventas no se modifican
-                        throw SaleDetailError.alreadyExist
-                    } else {
-                        try await saleDetail.save(on: transaction)
-                    }
-                }
-            }
-            return DefaultResponse(code: 200, message: "Ok")
-        }
-    }
     func save(req: Request) async throws -> DefaultResponse {
         let saleTransactionDTO = try req.content.decode(SaleTransactionDTO.self)
         let date: Date = Date()
@@ -205,6 +184,9 @@ struct SaleController: RouteCollection {
                 try await customerEntity.update(on: transaction)
             }
         }
+        SyncTimestamp.shared.updateLastSyncDate(to: .product)
+        SyncTimestamp.shared.updateLastSyncDate(to: .customer)
+        SyncTimestamp.shared.updateLastSyncDate(to: .sale)
         return DefaultResponse(code: 200, message: "Created")
     }
 //    private func correctAmount(saleTransactionDTO: SaleTransactionDTO, db: any Database) async throws -> Bool {

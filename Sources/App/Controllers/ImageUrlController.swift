@@ -70,6 +70,7 @@ struct ImageUrlController: RouteCollection {
                     }
                 }
                 try await imageUrlNew.save(on: req.db)
+                SyncTimestamp.shared.updateLastSyncDate(to: .image)
                 return imageUrlNew.toImageUrlDTO()
             }
         } else if imageUrlDto.imageUrl != "" { //Si no hay imageData debe tener URL
@@ -90,6 +91,7 @@ struct ImageUrlController: RouteCollection {
                 //Create
                 let imageUrlNew = imageUrlDto.toImageUrl()
                 try await imageUrlNew.save(on: req.db)
+                SyncTimestamp.shared.updateLastSyncDate(to: .image)
                 return imageUrlNew.toImageUrlDTO()
             }
         } else {

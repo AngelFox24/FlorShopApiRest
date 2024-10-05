@@ -45,6 +45,7 @@ struct EmployeeController: RouteCollection {
             employee.active = employeeDTO.active
             employee.$imageUrl.id = try await ImageUrl.find(employeeDTO.imageUrlId, on: req.db)?.id
             try await employee.update(on: req.db)
+            SyncTimestamp.shared.updateLastSyncDate(to: .employee)
             return DefaultResponse(code: 200, message: "Updated")
         } else {
             //Create
@@ -70,6 +71,7 @@ struct EmployeeController: RouteCollection {
                 imageUrlID: try await ImageUrl.find(employeeDTO.imageUrlId, on: req.db)?.id
             )
             try await employeeNew.save(on: req.db)
+            SyncTimestamp.shared.updateLastSyncDate(to: .employee)
             return DefaultResponse(code: 200, message: "Created")
         }
     }

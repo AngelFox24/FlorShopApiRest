@@ -51,6 +51,7 @@ struct ProductController: RouteCollection {
             product.unitPrice = productDTO.unitPrice
             product.$imageUrl.id = try await ImageUrl.find(productDTO.imageUrlId, on: req.db)?.id
             try await product.update(on: req.db)
+            SyncTimestamp.shared.updateLastSyncDate(to: .product)
             return DefaultResponse(code: 200, message: "Updated")
         } else {
             guard let subsidiaryId = try await Subsidiary.find(productDTO.subsidiaryId, on: req.db)?.id else {
@@ -77,6 +78,7 @@ struct ProductController: RouteCollection {
                 imageUrlID: try await ImageUrl.find(productDTO.imageUrlId, on: req.db)?.id
             )
             try await productNew.save(on: req.db)
+            SyncTimestamp.shared.updateLastSyncDate(to: .product)
             return DefaultResponse(code: 200, message: "Created")
         }
     }

@@ -28,7 +28,6 @@ final class Company: Model, Content {
     //MARK: Relationship
     @Children(for: \.$company)
     var toSubsidiary: [Subsidiary]
-    
     init() { }
     
     init(

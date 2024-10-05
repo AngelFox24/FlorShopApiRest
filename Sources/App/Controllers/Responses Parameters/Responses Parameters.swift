@@ -41,3 +41,13 @@ struct DefaultResponse: Content {
     let code: Int
     let message: String
 }
+
+struct VerifySyncParameters: Content {
+    let imageLastUpdate: UUID
+    let companyLastUpdate: UUID
+    let subsidiaryLastUpdate: UUID
+    let customerLastUpdate: UUID
+    let productLastUpdate: UUID
+    let employeeLastUpdate: UUID
+    let saleLastUpdate: UUID
+}

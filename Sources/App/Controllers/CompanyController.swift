@@ -21,48 +21,46 @@ struct CompanyController: RouteCollection {
         guard let companyNN = company else {
             throw Abort(.badRequest, reason: "No existe compania en la BD")
         }
-        
         return companyNN.toCompanyDTO()
     }
     func save(req: Request) async throws -> DefaultResponse {
         let companyDTO = try req.content.decode(CompanyDTO.self)
-        
-        return try await req.db.transaction { transaction in
-            if let company = try await Company.find(companyDTO.id, on: transaction) {
-                //Update
-                var update = false
-                if company.companyName != companyDTO.companyName {
-                    guard try await !companyNameExist(companyDTO: companyDTO, db: transaction) else {
-                        throw Abort(.badRequest, reason: "El nombre de la compañia ya existe")
-                    }
-                    company.companyName = companyDTO.companyName
-                    update = true
-                }
-                if company.ruc != companyDTO.ruc {
-                    guard try await !companyRucExist(companyDTO: companyDTO, db: transaction) else {
-                        throw Abort(.badRequest, reason: "El RUC de la compañia ya existe")
-                    }
-                    company.ruc = companyDTO.ruc
-                    update = true
-                }
-                if update {
-                    try await company.update(on: transaction)
-                    return DefaultResponse(code: 200, message: "Updated")
-                } else {
-                    return DefaultResponse(code: 200, message: "Not Updated")
-                }
-            } else {
-                //Create
-                guard try await !companyNameExist(companyDTO: companyDTO, db: transaction) else {
+        if let company = try await Company.find(companyDTO.id, on: req.db) {
+            //Update
+            var update = false
+            if company.companyName != companyDTO.companyName {
+                guard try await !companyNameExist(companyDTO: companyDTO, db: req.db) else {
                     throw Abort(.badRequest, reason: "El nombre de la compañia ya existe")
                 }
-                guard try await !companyRucExist(companyDTO: companyDTO, db: transaction) else {
+                company.companyName = companyDTO.companyName
+                update = true
+            }
+            if company.ruc != companyDTO.ruc {
+                guard try await !companyRucExist(companyDTO: companyDTO, db: req.db) else {
                     throw Abort(.badRequest, reason: "El RUC de la compañia ya existe")
                 }
-                let companyNew = companyDTO.toCompany()
-                try await companyNew.save(on: transaction)
-                return DefaultResponse(code: 200, message: "Created")
+                company.ruc = companyDTO.ruc
+                update = true
             }
+            if update {
+                try await company.update(on: req.db)
+                SyncTimestamp.shared.updateLastSyncDate(to: .company)
+                return DefaultResponse(code: 200, message: "Updated")
+            } else {
+                return DefaultResponse(code: 200, message: "Not Updated")
+            }
+        } else {
+            //Create
+            guard try await !companyNameExist(companyDTO: companyDTO, db: req.db) else {
+                throw Abort(.badRequest, reason: "El nombre de la compañia ya existe")
+            }
+            guard try await !companyRucExist(companyDTO: companyDTO, db: req.db) else {
+                throw Abort(.badRequest, reason: "El RUC de la compañia ya existe")
+            }
+            let companyNew = companyDTO.toCompany()
+            try await companyNew.save(on: req.db)
+            SyncTimestamp.shared.updateLastSyncDate(to: .company)
+            return DefaultResponse(code: 200, message: "Created")
         }
     }
     private func companyNameExist(companyDTO: CompanyDTO, db: any Database) async throws -> Bool {

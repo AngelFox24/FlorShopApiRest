@@ -42,6 +42,7 @@ struct SubsidiaryController: RouteCollection {
             }
             if update {
                 try await subsidiary.update(on: req.db)
+                SyncTimestamp.shared.updateLastSyncDate(to: .subsidiary)
                 return DefaultResponse(code: 200, message: "Updated")
             } else {
                 return DefaultResponse(code: 200, message: "Not Updated")
@@ -61,6 +62,7 @@ struct SubsidiaryController: RouteCollection {
                 imageUrlID: try await ImageUrl.find(subsidiaryDTO.imageUrlId, on: req.db)?.id
             )
             try await subsidiaryNew.save(on: req.db)
+            SyncTimestamp.shared.updateLastSyncDate(to: .subsidiary)
             return DefaultResponse(code: 200, message: "Created")
         }
     }
