@@ -93,7 +93,7 @@ struct SaleController: RouteCollection {
         guard try SyncTimestamp.shared.shouldSync(clientSyncIds: request.syncIds, entity: .sale) else {
             return SyncSalesResponse(
                 salesDTOs: [],
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                syncIds: request.syncIds
             )
         }
         let maxPerPage: Int = 50
@@ -107,7 +107,7 @@ struct SaleController: RouteCollection {
         let sales = try await query.all()
         return SyncSalesResponse(
             salesDTOs: sales.mapToListSaleDTO(),
-            syncIds: sales.count == maxPerPage ? SyncTimestamp.shared.getLastSyncDateTemp(entity: .sale) : SyncTimestamp.shared.getLastSyncDate()
+            syncIds: sales.count == maxPerPage ? request.syncIds : SyncTimestamp.shared.getUpdatedSyncTokens(entity: .sale, clientTokens: request.syncIds)
         )
     }
     func save(req: Request) async throws -> DefaultResponse {
@@ -194,8 +194,7 @@ struct SaleController: RouteCollection {
         SyncTimestamp.shared.updateLastSyncDate(to: .sale)
         return DefaultResponse(
             code: 200,
-            message: "Created",
-            syncIds: SyncTimestamp.shared.getLastSyncDate()
+            message: "Created"
         )
     }
 //    private func correctAmount(saleTransactionDTO: SaleTransactionDTO, db: any Database) async throws -> Bool {

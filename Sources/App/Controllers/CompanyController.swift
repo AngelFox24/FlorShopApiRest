@@ -12,7 +12,7 @@ struct CompanyController: RouteCollection {
         guard try SyncTimestamp.shared.shouldSync(clientSyncIds: request.syncIds, entity: .company) else {
             return SyncCompanyResponse(
                 companyDTO: nil,
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                syncIds: request.syncIds
             )
         }
         let query = Company.query(on: req.db)
@@ -25,7 +25,7 @@ struct CompanyController: RouteCollection {
         }
         return SyncCompanyResponse(
             companyDTO: companyNN.toCompanyDTO(),
-            syncIds: SyncTimestamp.shared.getLastSyncDate()
+            syncIds: SyncTimestamp.shared.getUpdatedSyncTokens(entity: .company, clientTokens: request.syncIds)
         )
     }
     func save(req: Request) async throws -> DefaultResponse {
@@ -52,14 +52,12 @@ struct CompanyController: RouteCollection {
                 SyncTimestamp.shared.updateLastSyncDate(to: .company)
                 return DefaultResponse(
                     code: 200,
-                    message: "Updated",
-                    syncIds: SyncTimestamp.shared.getLastSyncDate()
+                    message: "Updated"
                 )
             } else {
                 return DefaultResponse(
                     code: 200,
-                    message: "Not Updated",
-                    syncIds: SyncTimestamp.shared.getLastSyncDate()
+                    message: "Not Updated"
                 )
             }
         } else {
@@ -75,8 +73,7 @@ struct CompanyController: RouteCollection {
             SyncTimestamp.shared.updateLastSyncDate(to: .company)
             return DefaultResponse(
                 code: 200,
-                message: "Created",
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                message: "Created"
             )
         }
     }

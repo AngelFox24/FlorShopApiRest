@@ -60,15 +60,38 @@ final class SyncTimestamp {
             saleLastUpdate: self.lastSyncSale
         )
     }
-    func getLastSyncDateTemp(entity: SyncEntities) -> VerifySyncParameters {
+    func getUpdatedSyncTokens(entity: SyncEntities, clientTokens: VerifySyncParameters) -> VerifySyncParameters {
+        var lastSyncImageLocal = clientTokens.imageLastUpdate
+        var lastSyncCompanyLocal = clientTokens.companyLastUpdate
+        var lastSyncSubsidiaryLocal = clientTokens.subsidiaryLastUpdate
+        var lastSyncCustomerLocal = clientTokens.customerLastUpdate
+        var lastSyncProductLocal = clientTokens.productLastUpdate
+        var lastSyncEmployeeLocal = clientTokens.employeeLastUpdate
+        var lastSyncSaleLocal = clientTokens.saleLastUpdate
+        switch entity {
+        case .image:
+            lastSyncImageLocal = self.lastSyncImage
+        case .company:
+            lastSyncCompanyLocal = self.lastSyncCompany
+        case .subsidiary:
+            lastSyncSubsidiaryLocal = self.lastSyncSubsidiary
+        case .customer:
+            lastSyncCustomerLocal = self.lastSyncCustomer
+        case .product:
+            lastSyncProductLocal = self.lastSyncProduct
+        case .employee:
+            lastSyncEmployeeLocal = self.lastSyncEmployee
+        case .sale:
+            lastSyncSaleLocal = self.lastSyncSale
+        }
         return VerifySyncParameters(
-            imageLastUpdate: entity == .image ? UUID() : self.lastSyncImage,
-            companyLastUpdate: entity == .company ? UUID() : self.lastSyncCompany,
-            subsidiaryLastUpdate: entity == .subsidiary ? UUID() : self.lastSyncSubsidiary,
-            customerLastUpdate: entity == .customer ? UUID() : self.lastSyncCustomer,
-            productLastUpdate: entity == .product ? UUID() : self.lastSyncProduct,
-            employeeLastUpdate: entity == .employee ? UUID() : self.lastSyncEmployee,
-            saleLastUpdate: entity == .sale ? UUID() : self.lastSyncSale
+            imageLastUpdate: lastSyncImageLocal,
+            companyLastUpdate: lastSyncCompanyLocal,
+            subsidiaryLastUpdate: lastSyncSubsidiaryLocal,
+            customerLastUpdate: lastSyncCustomerLocal,
+            productLastUpdate: lastSyncProductLocal,
+            employeeLastUpdate: lastSyncEmployeeLocal,
+            saleLastUpdate: lastSyncSaleLocal
         )
     }
     func shouldSync(clientSyncIds: VerifySyncParameters, entity: SyncEntities) throws -> Bool {

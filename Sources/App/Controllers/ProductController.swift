@@ -13,7 +13,7 @@ struct ProductController: RouteCollection {
         guard try SyncTimestamp.shared.shouldSync(clientSyncIds: request.syncIds, entity: .product) else {
             return SyncProductsResponse(
                 productsDTOs: [],
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                syncIds: request.syncIds
             )
         }
         let maxPerPage: Int = 50
@@ -26,7 +26,7 @@ struct ProductController: RouteCollection {
         let products = try await query.all()
         return SyncProductsResponse(
             productsDTOs: products.mapToListProductDTO(),
-            syncIds: products.count == maxPerPage ? SyncTimestamp.shared.getLastSyncDateTemp(entity: .product) : SyncTimestamp.shared.getLastSyncDate()
+            syncIds: products.count == maxPerPage ? request.syncIds : SyncTimestamp.shared.getUpdatedSyncTokens(entity: .product, clientTokens: request.syncIds)
         )
     }
     func save(req: Request) async throws -> DefaultResponse {
@@ -59,8 +59,7 @@ struct ProductController: RouteCollection {
             SyncTimestamp.shared.updateLastSyncDate(to: .product)
             return DefaultResponse(
                 code: 200,
-                message: "Updated",
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                message: "Updated"
             )
         } else {
             guard let subsidiaryId = try await Subsidiary.find(productDTO.subsidiaryId, on: req.db)?.id else {
@@ -90,8 +89,7 @@ struct ProductController: RouteCollection {
             SyncTimestamp.shared.updateLastSyncDate(to: .product)
             return DefaultResponse(
                 code: 200,
-                message: "Created",
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                message: "Created"
             )
         }
     }
@@ -142,8 +140,7 @@ struct ProductController: RouteCollection {
             }
             return DefaultResponse(
                 code: 200,
-                message: "Ok",
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                message: "Ok"
             )
         }
     }

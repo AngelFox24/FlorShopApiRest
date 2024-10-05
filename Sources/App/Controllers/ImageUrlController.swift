@@ -12,7 +12,7 @@ struct ImageUrlController: RouteCollection {
         guard try SyncTimestamp.shared.shouldSync(clientSyncIds: request.syncIds, entity: .image) else {
             return SyncImageUrlResponse(
                 imagesUrlDTOs: [],
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                syncIds: request.syncIds
             )
         }
         let maxPerPage: Int = 50
@@ -23,7 +23,7 @@ struct ImageUrlController: RouteCollection {
         let images = try await query.all()
         return SyncImageUrlResponse(
             imagesUrlDTOs: images.mapToListImageURLDTO(),
-            syncIds: images.count == maxPerPage ? SyncTimestamp.shared.getLastSyncDateTemp(entity: .image) : SyncTimestamp.shared.getLastSyncDate()
+            syncIds: images.count == maxPerPage ? request.syncIds : SyncTimestamp.shared.getUpdatedSyncTokens(entity: .image, clientTokens: request.syncIds)
         )
     }
     func serveImage(req: Request) throws -> Response {
@@ -42,30 +42,21 @@ struct ImageUrlController: RouteCollection {
         // Crear la respuesta con el contenido de la imagen
         return req.fileio.streamFile(at: imageDirectory)
     }
-    func save(req: Request) async throws -> SaveImageResponse {
+    func save(req: Request) async throws -> ImageURLDTO {
         let imageUrlDto = try req.content.decode(ImageURLDTO.self)
         //No se permite edicion de ImagenUrl, en todo caso crear uno nuevo
         if let imageUrl = try await ImageUrl.find(imageUrlDto.id, on: req.db) {
-            return SaveImageResponse(
-                imageUrlDTO: imageUrl.toImageUrlDTO(),
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
-            )
+            return imageUrl.toImageUrlDTO()
         } else if let imageData = imageUrlDto.imageData { //Si hay imageData entonces guardara imagen local
             guard imageUrlDto.imageHash != "" else {
                 throw Abort(.badRequest, reason: "Se debe proporcionar el hash")
             }
             if let imageUrl = try await getImageUrlByHash(hash: imageUrlDto.imageHash, req: req) {
                 print("1: Se encontro por Hash")
-                return SaveImageResponse(
-                    imageUrlDTO: imageUrl.toImageUrlDTO(),
-                    syncIds: SyncTimestamp.shared.getLastSyncDate()
-                )
+                return imageUrl.toImageUrlDTO()
             } else if imageUrlDto.imageUrl != "", let imageUrl = try await getImageUrlByUrl(url: imageUrlDto.imageUrl, req: req) {
                 print("1: Se encontro por Url")
-                return SaveImageResponse(
-                    imageUrlDTO: imageUrl.toImageUrlDTO(),
-                    syncIds: SyncTimestamp.shared.getLastSyncDate()
-                )
+                return imageUrl.toImageUrlDTO()
             } else {
                 print("1: Se Creara que mrd")
                 //Create
@@ -86,10 +77,7 @@ struct ImageUrlController: RouteCollection {
                 }
                 try await imageUrlNew.save(on: req.db)
                 SyncTimestamp.shared.updateLastSyncDate(to: .image)
-                return SaveImageResponse(
-                    imageUrlDTO: imageUrlNew.toImageUrlDTO(),
-                    syncIds: SyncTimestamp.shared.getLastSyncDate()
-                )
+                return imageUrlNew.toImageUrlDTO()
             }
         } else if imageUrlDto.imageUrl != "" { //Si no hay imageData debe tener URL
             guard imageUrlDto.imageUrl != "" else {
@@ -97,32 +85,20 @@ struct ImageUrlController: RouteCollection {
             }
             if let imageUrl = try await ImageUrl.find(imageUrlDto.id, on: req.db) {//No actualizamos nada si busca por id
                 print("2: Se encontro por Id")
-                return SaveImageResponse(
-                    imageUrlDTO: imageUrl.toImageUrlDTO(),
-                    syncIds: SyncTimestamp.shared.getLastSyncDate()
-                )
+                return imageUrl.toImageUrlDTO()
             } else if imageUrlDto.imageHash != "", let imageUrl = try await getImageUrlByHash(hash: imageUrlDto.imageHash, req: req) {
                 print("2: Se encontro por hash")
-                return SaveImageResponse(
-                    imageUrlDTO: imageUrl.toImageUrlDTO(),
-                    syncIds: SyncTimestamp.shared.getLastSyncDate()
-                )
+                return imageUrl.toImageUrlDTO()
             } else if let imageUrl = try await getImageUrlByUrl(url: imageUrlDto.imageUrl, req: req) {
                 print("2: Se encontro por Url")
-                return SaveImageResponse(
-                    imageUrlDTO: imageUrl.toImageUrlDTO(),
-                    syncIds: SyncTimestamp.shared.getLastSyncDate()
-                )
+                return imageUrl.toImageUrlDTO()
             } else {
                 print("2: Se creara")
                 //Create
                 let imageUrlNew = imageUrlDto.toImageUrl()
                 try await imageUrlNew.save(on: req.db)
                 SyncTimestamp.shared.updateLastSyncDate(to: .image)
-                return SaveImageResponse(
-                    imageUrlDTO: imageUrlNew.toImageUrlDTO(),
-                    syncIds: SyncTimestamp.shared.getLastSyncDate()
-                )
+                return imageUrlNew.toImageUrlDTO()
             }
         } else {
             throw Abort(.badRequest, reason: "Se debe proporcionar el ImageData con hash o Url")

@@ -12,7 +12,7 @@ struct EmployeeController: RouteCollection {
         guard try SyncTimestamp.shared.shouldSync(clientSyncIds: request.syncIds, entity: .employee) else {
             return SyncEmployeesResponse(
                 employeesDTOs: [],
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                syncIds: request.syncIds
             )
         }
         let maxPerPage = 50
@@ -24,7 +24,7 @@ struct EmployeeController: RouteCollection {
         let employees = try await query.all()
         return SyncEmployeesResponse(
             employeesDTOs: employees.mapToListEmployeeDTO(),
-            syncIds: employees.count == maxPerPage ? SyncTimestamp.shared.getLastSyncDateTemp(entity: .employee) : SyncTimestamp.shared.getLastSyncDate()
+            syncIds: employees.count == maxPerPage ? request.syncIds : SyncTimestamp.shared.getUpdatedSyncTokens(entity: .employee, clientTokens: request.syncIds)
         )
     }
     func save(req: Request) async throws -> DefaultResponse {
@@ -53,8 +53,7 @@ struct EmployeeController: RouteCollection {
             SyncTimestamp.shared.updateLastSyncDate(to: .employee)
             return DefaultResponse(
                 code: 200,
-                message: "Updated",
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                message: "Updated"
             )
         } else {
             //Create
@@ -83,8 +82,7 @@ struct EmployeeController: RouteCollection {
             SyncTimestamp.shared.updateLastSyncDate(to: .employee)
             return DefaultResponse(
                 code: 200,
-                message: "Created",
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                message: "Created"
             )
         }
     }

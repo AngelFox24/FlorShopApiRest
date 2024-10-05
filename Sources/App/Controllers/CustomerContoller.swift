@@ -12,7 +12,7 @@ struct CustomerContoller: RouteCollection {
         guard try SyncTimestamp.shared.shouldSync(clientSyncIds: request.syncIds, entity: .customer) else {
             return SyncCustomersResponse(
                 customersDTOs: [],
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                syncIds: request.syncIds
             )
         }
         let maxPerPage = 50
@@ -24,7 +24,7 @@ struct CustomerContoller: RouteCollection {
         let customers = try await query.all()
         return SyncCustomersResponse(
             customersDTOs: customers.mapToListCustomerDTO(),
-            syncIds: customers.count == maxPerPage ? SyncTimestamp.shared.getLastSyncDateTemp(entity: .customer) : SyncTimestamp.shared.getLastSyncDate()
+            syncIds: customers.count == maxPerPage ? request.syncIds : SyncTimestamp.shared.getUpdatedSyncTokens(entity: .customer, clientTokens: request.syncIds)
         )
     }
     func save(req: Request) async throws -> DefaultResponse {
@@ -56,8 +56,7 @@ struct CustomerContoller: RouteCollection {
             SyncTimestamp.shared.updateLastSyncDate(to: .customer)
             return DefaultResponse(
                 code: 200,
-                message: "Updated",
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                message: "Updated"
             )
         } else {
             //Create
@@ -90,8 +89,7 @@ struct CustomerContoller: RouteCollection {
             SyncTimestamp.shared.updateLastSyncDate(to: .customer)
             return DefaultResponse(
                 code: 200,
-                message: "Created",
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                message: "Created"
             )
         }
     }
@@ -124,8 +122,7 @@ struct CustomerContoller: RouteCollection {
             SyncTimestamp.shared.updateLastSyncDate(to: .customer)
             return PayCustomerDebtResponse(
                 customerId: payCustomerDebtParameters.customerId,
-                change: remainingMoney,
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                change: remainingMoney
             )
         } else {
             print("El cliente no existe")

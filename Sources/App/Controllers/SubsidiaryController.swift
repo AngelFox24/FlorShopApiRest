@@ -12,7 +12,7 @@ struct SubsidiaryController: RouteCollection {
         guard try SyncTimestamp.shared.shouldSync(clientSyncIds: request.syncIds, entity: .subsidiary) else {
             return SyncSubsidiariesResponse(
                 subsidiariesDTOs: [],
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                syncIds: request.syncIds
             )
         }
         let maxPerPage = 50
@@ -25,7 +25,7 @@ struct SubsidiaryController: RouteCollection {
         let subsidiaries = try await query.all()
         return SyncSubsidiariesResponse(
             subsidiariesDTOs: subsidiaries.mapToListSubsidiaryDTO(),
-            syncIds: subsidiaries.count == maxPerPage ? SyncTimestamp.shared.getLastSyncDateTemp(entity: .subsidiary) : SyncTimestamp.shared.getLastSyncDate()
+            syncIds: subsidiaries.count == maxPerPage ? request.syncIds : SyncTimestamp.shared.getUpdatedSyncTokens(entity: .subsidiary, clientTokens: request.syncIds)
         )
     }
     func save(req: Request) async throws -> DefaultResponse {
@@ -50,14 +50,12 @@ struct SubsidiaryController: RouteCollection {
                 SyncTimestamp.shared.updateLastSyncDate(to: .subsidiary)
                 return DefaultResponse(
                     code: 200,
-                    message: "Updated",
-                    syncIds: SyncTimestamp.shared.getLastSyncDate()
+                    message: "Updated"
                 )
             } else {
                 return DefaultResponse(
                     code: 200,
-                    message: "Not Updated",
-                    syncIds: SyncTimestamp.shared.getLastSyncDate()
+                    message: "Not Updated"
                 )
             }
         } else {
@@ -78,8 +76,7 @@ struct SubsidiaryController: RouteCollection {
             SyncTimestamp.shared.updateLastSyncDate(to: .subsidiary)
             return DefaultResponse(
                 code: 200,
-                message: "Created",
-                syncIds: SyncTimestamp.shared.getLastSyncDate()
+                message: "Created"
             )
         }
     }

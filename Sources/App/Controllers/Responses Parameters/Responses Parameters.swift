@@ -9,16 +9,10 @@ import Vapor
 struct DefaultResponse: Content {
     let code: Int
     let message: String
-    let syncIds: VerifySyncParameters
 }
 struct PayCustomerDebtResponse: Content {
     let customerId: UUID
     let change: Int
-    let syncIds: VerifySyncParameters
-}
-struct SaveImageResponse: Content {
-    let imageUrlDTO: ImageURLDTO
-    let syncIds: VerifySyncParameters
 }
 //MARK: Sync Response Parameters
 struct SyncCompanyResponse: Content {

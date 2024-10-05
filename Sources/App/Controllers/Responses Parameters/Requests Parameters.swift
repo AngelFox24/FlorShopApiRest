@@ -24,13 +24,13 @@ struct SyncImageParameters: Content {
     let updatedSince: Date
     let syncIds: VerifySyncParameters
 }
-struct SyncFromSubsidiaryParameters: Content {
-    let subsidiaryId: UUID
+struct SyncFromCompanyParameters: Content {
+    let companyId: UUID
     let updatedSince: Date
     let syncIds: VerifySyncParameters
 }
-struct SyncFromCompanyParameters: Content {
-    let companyId: UUID
+struct SyncFromSubsidiaryParameters: Content {
+    let subsidiaryId: UUID
     let updatedSince: Date
     let syncIds: VerifySyncParameters
 }
