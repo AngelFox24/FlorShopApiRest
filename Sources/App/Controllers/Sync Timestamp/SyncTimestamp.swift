@@ -71,4 +71,55 @@ final class SyncTimestamp {
             saleLastUpdate: entity == .sale ? UUID() : self.lastSyncSale
         )
     }
+    func shouldSync(clientSyncIds: VerifySyncParameters, entity: SyncEntities) throws -> Bool {
+        var parentUpToDate: Bool = true
+        var sync = false
+        switch entity {
+        case .image:
+            return self.lastSyncImage == clientSyncIds.imageLastUpdate
+        case .company:
+            return self.lastSyncCompany == clientSyncIds.companyLastUpdate
+        case .subsidiary:
+            parentUpToDate = self.lastSyncCompany == clientSyncIds.companyLastUpdate
+            parentUpToDate = parentUpToDate ? self.lastSyncImage == clientSyncIds.imageLastUpdate : false
+            guard parentUpToDate else {
+                throw Abort(.badRequest, reason: "Parents are not up to date")
+            }
+            return self.lastSyncSubsidiary == clientSyncIds.subsidiaryLastUpdate
+        case .customer:
+            parentUpToDate = self.lastSyncCompany == clientSyncIds.companyLastUpdate
+            parentUpToDate = parentUpToDate ? self.lastSyncImage == clientSyncIds.imageLastUpdate : false
+            parentUpToDate = parentUpToDate ? self.lastSyncSubsidiary == clientSyncIds.subsidiaryLastUpdate : false
+            guard parentUpToDate else {
+                throw Abort(.badRequest, reason: "Parents are not up to date")
+            }
+            return self.lastSyncCustomer == clientSyncIds.customerLastUpdate
+        case .employee:
+            parentUpToDate = self.lastSyncCompany == clientSyncIds.companyLastUpdate
+            parentUpToDate = parentUpToDate ? self.lastSyncImage == clientSyncIds.imageLastUpdate : false
+            parentUpToDate = parentUpToDate ? self.lastSyncSubsidiary == clientSyncIds.subsidiaryLastUpdate : false
+            guard parentUpToDate else {
+                throw Abort(.badRequest, reason: "Parents are not up to date")
+            }
+            return self.lastSyncEmployee == clientSyncIds.employeeLastUpdate
+        case .product:
+            parentUpToDate = self.lastSyncCompany == clientSyncIds.companyLastUpdate
+            parentUpToDate = parentUpToDate ? self.lastSyncImage == clientSyncIds.imageLastUpdate : false
+            parentUpToDate = parentUpToDate ? self.lastSyncSubsidiary == clientSyncIds.subsidiaryLastUpdate : false
+            guard parentUpToDate else {
+                throw Abort(.badRequest, reason: "Parents are not up to date")
+            }
+            return self.lastSyncProduct == clientSyncIds.productLastUpdate
+        case .sale:
+            parentUpToDate = self.lastSyncCompany == clientSyncIds.companyLastUpdate
+            parentUpToDate = parentUpToDate ? self.lastSyncImage == clientSyncIds.imageLastUpdate : false
+            parentUpToDate = parentUpToDate ? self.lastSyncSubsidiary == clientSyncIds.subsidiaryLastUpdate : false
+            parentUpToDate = parentUpToDate ? self.lastSyncEmployee == clientSyncIds.employeeLastUpdate : false
+            parentUpToDate = parentUpToDate ? self.lastSyncCustomer == clientSyncIds.customerLastUpdate : false
+            guard parentUpToDate else {
+                throw Abort(.badRequest, reason: "Parents are not up to date")
+            }
+            return self.lastSyncSale == clientSyncIds.saleLastUpdate
+        }
+    }
 }

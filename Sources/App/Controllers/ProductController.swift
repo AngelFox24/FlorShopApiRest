@@ -10,9 +10,7 @@ struct ProductController: RouteCollection {
     }
     func sync(req: Request) async throws -> SyncProductsResponse {
         let request = try req.content.decode(SyncFromSubsidiaryParameters.self)
-        let productURLClientLastSyncId = request.syncIds.productLastUpdate
-        let productBackendLastSyncId = SyncTimestamp.shared.getLastSyncDate().productLastUpdate
-        guard productURLClientLastSyncId != productBackendLastSyncId else {
+        guard try SyncTimestamp.shared.shouldSync(clientSyncIds: request.syncIds, entity: .product) else {
             return SyncProductsResponse(
                 productsDTOs: [],
                 syncIds: SyncTimestamp.shared.getLastSyncDate()

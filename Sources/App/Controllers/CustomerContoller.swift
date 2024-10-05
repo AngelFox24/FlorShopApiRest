@@ -9,9 +9,7 @@ struct CustomerContoller: RouteCollection {
     }
     func sync(req: Request) async throws -> SyncCustomersResponse {
         let request = try req.content.decode(SyncFromCompanyParameters.self)
-        let customerClientLastSyncId = request.syncIds.customerLastUpdate
-        let customerBackendLastSyncId = SyncTimestamp.shared.getLastSyncDate().customerLastUpdate
-        guard customerClientLastSyncId != customerBackendLastSyncId else {
+        guard try SyncTimestamp.shared.shouldSync(clientSyncIds: request.syncIds, entity: .customer) else {
             return SyncCustomersResponse(
                 customersDTOs: [],
                 syncIds: SyncTimestamp.shared.getLastSyncDate()

@@ -9,9 +9,7 @@ struct ImageUrlController: RouteCollection {
     }
     func sync(req: Request) async throws -> SyncImageUrlResponse {
         let request = try req.content.decode(SyncImageParameters.self)
-        let imageURLClientLastSyncId = request.syncIds.imageLastUpdate
-        let imageURLBackendLastSyncId = SyncTimestamp.shared.getLastSyncDate().imageLastUpdate
-        guard imageURLClientLastSyncId != imageURLBackendLastSyncId else {
+        guard try SyncTimestamp.shared.shouldSync(clientSyncIds: request.syncIds, entity: .image) else {
             return SyncImageUrlResponse(
                 imagesUrlDTOs: [],
                 syncIds: SyncTimestamp.shared.getLastSyncDate()

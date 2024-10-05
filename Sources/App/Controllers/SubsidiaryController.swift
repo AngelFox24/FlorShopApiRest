@@ -9,9 +9,7 @@ struct SubsidiaryController: RouteCollection {
     }
     func sync(req: Request) async throws -> SyncSubsidiariesResponse {
         let request = try req.content.decode(SyncFromCompanyParameters.self)
-        let subisidiaryURLClientLastSyncId = request.syncIds.subsidiaryLastUpdate
-        let subisidiaryBackendLastSyncId = SyncTimestamp.shared.getLastSyncDate().subsidiaryLastUpdate
-        guard subisidiaryURLClientLastSyncId != subisidiaryBackendLastSyncId else {
+        guard try SyncTimestamp.shared.shouldSync(clientSyncIds: request.syncIds, entity: .subsidiary) else {
             return SyncSubsidiariesResponse(
                 subsidiariesDTOs: [],
                 syncIds: SyncTimestamp.shared.getLastSyncDate()

@@ -90,9 +90,7 @@ struct SaleController: RouteCollection {
     }
     func sync(req: Request) async throws -> SyncSalesResponse {
         let request = try req.content.decode(SyncFromSubsidiaryParameters.self)
-        let saleURLClientLastSyncId = request.syncIds.saleLastUpdate
-        let saleBackendLastSyncId = SyncTimestamp.shared.getLastSyncDate().saleLastUpdate
-        guard saleURLClientLastSyncId != saleBackendLastSyncId else {
+        guard try SyncTimestamp.shared.shouldSync(clientSyncIds: request.syncIds, entity: .sale) else {
             return SyncSalesResponse(
                 salesDTOs: [],
                 syncIds: SyncTimestamp.shared.getLastSyncDate()

@@ -9,9 +9,7 @@ struct EmployeeController: RouteCollection {
     }
     func sync(req: Request) async throws -> SyncEmployeesResponse {
         let request = try req.content.decode(SyncFromSubsidiaryParameters.self)
-        let employeeClientLastSyncId = request.syncIds.employeeLastUpdate
-        let employeeBackendLastSyncId = SyncTimestamp.shared.getLastSyncDate().employeeLastUpdate
-        guard employeeClientLastSyncId != employeeBackendLastSyncId else {
+        guard try SyncTimestamp.shared.shouldSync(clientSyncIds: request.syncIds, entity: .employee) else {
             return SyncEmployeesResponse(
                 employeesDTOs: [],
                 syncIds: SyncTimestamp.shared.getLastSyncDate()
