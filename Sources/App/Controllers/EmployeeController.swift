@@ -7,20 +7,27 @@ struct EmployeeController: RouteCollection {
         employees.post("sync", use: sync)
         employees.post(use: save)
     }
-    func sync(req: Request) async throws -> [EmployeeDTO] {
-        //Precicion de segundos solamente
-        //No se requiere mas precicion ya que el objetivo es sincronizar y en caso haya repetidos esto se mitiga en la app
+    func sync(req: Request) async throws -> SyncEmployeesResponse {
         let request = try req.content.decode(SyncFromSubsidiaryParameters.self)
-        
+        let employeeClientLastSyncId = request.syncIds.employeeLastUpdate
+        let employeeBackendLastSyncId = SyncTimestamp.shared.getLastSyncDate().employeeLastUpdate
+        guard employeeClientLastSyncId != employeeBackendLastSyncId else {
+            return SyncEmployeesResponse(
+                employeesDTOs: [],
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
+        }
+        let maxPerPage = 50
         let query = Employee.query(on: req.db)
             .filter(\.$updatedAt >= request.updatedSince)
             .sort(\.$updatedAt, .ascending)
             .with(\.$imageUrl)
-            .limit(50)
-        
+            .limit(maxPerPage)
         let employees = try await query.all()
-        
-        return employees.mapToListEmployeeDTO()
+        return SyncEmployeesResponse(
+            employeesDTOs: employees.mapToListEmployeeDTO(),
+            syncIds: employees.count == maxPerPage ? SyncTimestamp.shared.getLastSyncDateTemp(entity: .employee) : SyncTimestamp.shared.getLastSyncDate()
+        )
     }
     func save(req: Request) async throws -> DefaultResponse {
         let employeeDTO = try req.content.decode(EmployeeDTO.self)
@@ -46,7 +53,11 @@ struct EmployeeController: RouteCollection {
             employee.$imageUrl.id = try await ImageUrl.find(employeeDTO.imageUrlId, on: req.db)?.id
             try await employee.update(on: req.db)
             SyncTimestamp.shared.updateLastSyncDate(to: .employee)
-            return DefaultResponse(code: 200, message: "Updated")
+            return DefaultResponse(
+                code: 200,
+                message: "Updated",
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
         } else {
             //Create
             guard let subsidiaryId = try await Subsidiary.find(employeeDTO.subsidiaryID, on: req.db)?.id else {
@@ -72,7 +83,11 @@ struct EmployeeController: RouteCollection {
             )
             try await employeeNew.save(on: req.db)
             SyncTimestamp.shared.updateLastSyncDate(to: .employee)
-            return DefaultResponse(code: 200, message: "Created")
+            return DefaultResponse(
+                code: 200,
+                message: "Created",
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
         }
     }
     private func employeeUserNameExist(employeeDTO: EmployeeDTO, db: any Database) async throws -> Bool {

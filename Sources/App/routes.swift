@@ -3,13 +3,8 @@ import Vapor
 
 func routes(_ app: Application) throws {
     app.get { req async in
-        "It works!"
+        "FlorShopApi v1.4"
     }
-
-    app.get("hello") { req async -> String in
-        "Hello, world!"
-    }
-    
     try app.register(collection: SessionController())
     try app.register(collection: CompanyController())
     try app.register(collection: ImageUrlController())
@@ -18,5 +13,4 @@ func routes(_ app: Application) throws {
     try app.register(collection: CustomerContoller())
     try app.register(collection: EmployeeController())
     try app.register(collection: SaleController())
-    try app.register(collection: SaleDetailController())
 }

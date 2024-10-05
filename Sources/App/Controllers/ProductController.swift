@@ -8,21 +8,28 @@ struct ProductController: RouteCollection {
         products.post(use: save)
         products.post("bulkCreate", use: bulkCreate)
     }
-    func sync(req: Request) async throws -> [ProductDTO] {
-        //Precicion de segundos solamente
-        //No se requiere mas precicion ya que el objetivo es sincronizar y en caso haya repetidos esto se mitiga en la app
+    func sync(req: Request) async throws -> SyncProductsResponse {
         let request = try req.content.decode(SyncFromSubsidiaryParameters.self)
-        
+        let productURLClientLastSyncId = request.syncIds.productLastUpdate
+        let productBackendLastSyncId = SyncTimestamp.shared.getLastSyncDate().productLastUpdate
+        guard productURLClientLastSyncId != productBackendLastSyncId else {
+            return SyncProductsResponse(
+                productsDTOs: [],
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
+        }
+        let maxPerPage: Int = 50
         let query = Product.query(on: req.db)
             .filter(\.$subsidiary.$id == request.subsidiaryId)
             .filter(\.$updatedAt >= request.updatedSince)
             .sort(\.$updatedAt, .ascending)
             .with(\.$imageUrl)
-            .limit(50)
-        
+            .limit(maxPerPage)
         let products = try await query.all()
-        
-        return products.mapToListProductDTO()
+        return SyncProductsResponse(
+            productsDTOs: products.mapToListProductDTO(),
+            syncIds: products.count == maxPerPage ? SyncTimestamp.shared.getLastSyncDateTemp(entity: .product) : SyncTimestamp.shared.getLastSyncDate()
+        )
     }
     func save(req: Request) async throws -> DefaultResponse {
         let productDTO = try req.content.decode(ProductDTO.self)
@@ -52,7 +59,11 @@ struct ProductController: RouteCollection {
             product.$imageUrl.id = try await ImageUrl.find(productDTO.imageUrlId, on: req.db)?.id
             try await product.update(on: req.db)
             SyncTimestamp.shared.updateLastSyncDate(to: .product)
-            return DefaultResponse(code: 200, message: "Updated")
+            return DefaultResponse(
+                code: 200,
+                message: "Updated",
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
         } else {
             guard let subsidiaryId = try await Subsidiary.find(productDTO.subsidiaryId, on: req.db)?.id else {
                 throw Abort(.badRequest, reason: "La subsidiaria no existe")
@@ -79,7 +90,11 @@ struct ProductController: RouteCollection {
             )
             try await productNew.save(on: req.db)
             SyncTimestamp.shared.updateLastSyncDate(to: .product)
-            return DefaultResponse(code: 200, message: "Created")
+            return DefaultResponse(
+                code: 200,
+                message: "Created",
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
         }
     }
     private func productNameExist(productDTO: ProductDTO, db: any Database) async throws -> Bool {
@@ -127,7 +142,11 @@ struct ProductController: RouteCollection {
                 let product = productDTO.toProduct()
                 try await product.save(on: transaction)
             }
-            return DefaultResponse(code: 200, message: "Ok")
+            return DefaultResponse(
+                code: 200,
+                message: "Ok",
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
         }
     }
 }

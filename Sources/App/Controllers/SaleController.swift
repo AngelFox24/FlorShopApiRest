@@ -88,11 +88,17 @@ struct SaleController: RouteCollection {
         sales.post("sync", use: sync)
         sales.post(use: save)
     }
-    func sync(req: Request) async throws -> [SaleDTO] {
-        //Precicion de segundos solamente
-        //No se requiere mas precicion ya que el objetivo es sincronizar y en caso haya repetidos esto se mitiga en la app
+    func sync(req: Request) async throws -> SyncSalesResponse {
         let request = try req.content.decode(SyncFromSubsidiaryParameters.self)
-        
+        let saleURLClientLastSyncId = request.syncIds.saleLastUpdate
+        let saleBackendLastSyncId = SyncTimestamp.shared.getLastSyncDate().saleLastUpdate
+        guard saleURLClientLastSyncId != saleBackendLastSyncId else {
+            return SyncSalesResponse(
+                salesDTOs: [],
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
+        }
+        let maxPerPage: Int = 50
         let query = Sale.query(on: req.db)
             .filter(\.$updatedAt >= request.updatedSince)
             .sort(\.$updatedAt, .ascending)
@@ -100,13 +106,14 @@ struct SaleController: RouteCollection {
                 saleDetail.with(\.$imageUrl)
             }
             .limit(50)
-        
         let sales = try await query.all()
-        
-        return sales.mapToListSaleDTO()
+        return SyncSalesResponse(
+            salesDTOs: sales.mapToListSaleDTO(),
+            syncIds: sales.count == maxPerPage ? SyncTimestamp.shared.getLastSyncDateTemp(entity: .sale) : SyncTimestamp.shared.getLastSyncDate()
+        )
     }
     func save(req: Request) async throws -> DefaultResponse {
-        let saleTransactionDTO = try req.content.decode(SaleTransactionDTO.self)
+        let saleTransactionDTO = try req.content.decode(RegisterSaleParameters.self)
         let date: Date = Date()
         guard !saleTransactionDTO.cart.cartDetails.isEmpty else {
             print("No se encontro productos en la solicitud de venta")
@@ -187,7 +194,11 @@ struct SaleController: RouteCollection {
         SyncTimestamp.shared.updateLastSyncDate(to: .product)
         SyncTimestamp.shared.updateLastSyncDate(to: .customer)
         SyncTimestamp.shared.updateLastSyncDate(to: .sale)
-        return DefaultResponse(code: 200, message: "Created")
+        return DefaultResponse(
+            code: 200,
+            message: "Created",
+            syncIds: SyncTimestamp.shared.getLastSyncDate()
+        )
     }
 //    private func correctAmount(saleTransactionDTO: SaleTransactionDTO, db: any Database) async throws -> Bool {
 //        let cartDTO = saleTransactionDTO.cart
@@ -213,12 +224,4 @@ struct SaleController: RouteCollection {
             throw Abort(.badRequest, reason: "No hay stock suficiente")
         }
     }
-}
-
-struct SaleTransactionDTO: Content {
-    let subsidiaryId: UUID
-    let employeeId: UUID
-    let customerId: UUID?
-    let paymentType: String
-    let cart: CartDTO
 }

@@ -7,21 +7,28 @@ struct CompanyController: RouteCollection {
         companies.post("sync", use: sync)
         companies.post(use: save)
     }
-    func sync(req: Request) async throws -> CompanyDTO {
-        //Precicion de segundos solamente
-        //No se requiere mas precicion ya que el objetivo es sincronizar y en caso haya repetidos esto se mitiga en la app
+    func sync(req: Request) async throws -> SyncCompanyResponse {
         let request = try req.content.decode(SyncCompanyParameters.self)
-        
+        let companyClientLastSyncId = request.syncIds.companyLastUpdate
+        let companyBackendLastSyncId = SyncTimestamp.shared.getLastSyncDate().companyLastUpdate
+        guard companyClientLastSyncId != companyBackendLastSyncId else {
+            return SyncCompanyResponse(
+                companyDTO: nil,
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
+        }
         let query = Company.query(on: req.db)
             .filter(\.$updatedAt >= request.updatedSince)
             .sort(\.$updatedAt, .ascending)
             .limit(1)
-        
         let company = try await query.all().first
         guard let companyNN = company else {
             throw Abort(.badRequest, reason: "No existe compania en la BD")
         }
-        return companyNN.toCompanyDTO()
+        return SyncCompanyResponse(
+            companyDTO: companyNN.toCompanyDTO(),
+            syncIds: SyncTimestamp.shared.getLastSyncDate()
+        )
     }
     func save(req: Request) async throws -> DefaultResponse {
         let companyDTO = try req.content.decode(CompanyDTO.self)
@@ -45,9 +52,17 @@ struct CompanyController: RouteCollection {
             if update {
                 try await company.update(on: req.db)
                 SyncTimestamp.shared.updateLastSyncDate(to: .company)
-                return DefaultResponse(code: 200, message: "Updated")
+                return DefaultResponse(
+                    code: 200,
+                    message: "Updated",
+                    syncIds: SyncTimestamp.shared.getLastSyncDate()
+                )
             } else {
-                return DefaultResponse(code: 200, message: "Not Updated")
+                return DefaultResponse(
+                    code: 200,
+                    message: "Not Updated",
+                    syncIds: SyncTimestamp.shared.getLastSyncDate()
+                )
             }
         } else {
             //Create
@@ -60,7 +75,11 @@ struct CompanyController: RouteCollection {
             let companyNew = companyDTO.toCompany()
             try await companyNew.save(on: req.db)
             SyncTimestamp.shared.updateLastSyncDate(to: .company)
-            return DefaultResponse(code: 200, message: "Created")
+            return DefaultResponse(
+                code: 200,
+                message: "Created",
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
         }
     }
     private func companyNameExist(companyDTO: CompanyDTO, db: any Database) async throws -> Bool {

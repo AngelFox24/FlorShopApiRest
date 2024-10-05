@@ -1,6 +1,5 @@
 import Fluent
 import Vapor
-
 struct CustomerContoller: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
         let customers = routes.grouped("customers")
@@ -8,19 +7,27 @@ struct CustomerContoller: RouteCollection {
         customers.post(use: save)
         customers.post("payDebt", use: payDebt)
     }
-    func sync(req: Request) async throws -> [CustomerDTO] {
-        //Precicion de segundos solamente
-        //No se requiere mas precicion ya que el objetivo es sincronizar y en caso haya repetidos esto se mitiga en la app
+    func sync(req: Request) async throws -> SyncCustomersResponse {
         let request = try req.content.decode(SyncFromCompanyParameters.self)
-        
+        let customerClientLastSyncId = request.syncIds.customerLastUpdate
+        let customerBackendLastSyncId = SyncTimestamp.shared.getLastSyncDate().customerLastUpdate
+        guard customerClientLastSyncId != customerBackendLastSyncId else {
+            return SyncCustomersResponse(
+                customersDTOs: [],
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
+        }
+        let maxPerPage = 50
         let query = Customer.query(on: req.db)
             .filter(\.$updatedAt >= request.updatedSince)
             .sort(\.$updatedAt, .ascending)
             .with(\.$imageUrl)
-            .limit(50)
-        
+            .limit(maxPerPage)
         let customers = try await query.all()
-        return customers.mapToListCustomerDTO()
+        return SyncCustomersResponse(
+            customersDTOs: customers.mapToListCustomerDTO(),
+            syncIds: customers.count == maxPerPage ? SyncTimestamp.shared.getLastSyncDateTemp(entity: .customer) : SyncTimestamp.shared.getLastSyncDate()
+        )
     }
     func save(req: Request) async throws -> DefaultResponse {
         let customerDTO = try req.content.decode(CustomerDTO.self)
@@ -49,7 +56,11 @@ struct CustomerContoller: RouteCollection {
             customer.isCreditLimit = customer.isCreditLimitActive ? customer.totalDebt >= customer.creditLimit : false
             try await customer.update(on: req.db)
             SyncTimestamp.shared.updateLastSyncDate(to: .customer)
-            return DefaultResponse(code: 200, message: "Updated")
+            return DefaultResponse(
+                code: 200,
+                message: "Updated",
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
         } else {
             //Create
             guard let companyID = try await Company.find(customerDTO.companyID, on: req.db)?.id else {
@@ -79,19 +90,23 @@ struct CustomerContoller: RouteCollection {
             )
             try await customerNew.save(on: req.db)
             SyncTimestamp.shared.updateLastSyncDate(to: .customer)
-            return DefaultResponse(code: 200, message: "Created")
+            return DefaultResponse(
+                code: 200,
+                message: "Created",
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
         }
     }
-    func payDebt(req: Request) async throws -> PayCustomerDebt {
-        let payCustomerDebt = try req.content.decode(PayCustomerDebt.self)
-        guard payCustomerDebt.amount > 0 else {
+    func payDebt(req: Request) async throws -> PayCustomerDebtResponse {
+        let payCustomerDebtParameters = try req.content.decode(PayCustomerDebtParameters.self)
+        guard payCustomerDebtParameters.amount > 0 else {
             throw Abort(.badRequest, reason: "El monto debe ser mayor a 0")
         }
-        if let customer = try await Customer.find(payCustomerDebt.customerId, on: req.db) {
+        if let customer = try await Customer.find(payCustomerDebtParameters.customerId, on: req.db) {
             let remainingMoney = try await req.db.transaction { transaction -> Int in
                 var customerTotalDebt = customer.totalDebt
-                var remainingMoney = payCustomerDebt.amount
-                let sales = try await getSalesWithDebt(customerId: payCustomerDebt.customerId, db: transaction)
+                var remainingMoney = payCustomerDebtParameters.amount
+                let sales = try await getSalesWithDebt(customerId: payCustomerDebtParameters.customerId, db: transaction)
                 for sale in sales {
                     let subtotal = sale.toSaleDetail.reduce(0) {$0 + ($1.unitPrice * $1.quantitySold)}
                     if remainingMoney >= subtotal && customerTotalDebt >= subtotal  { //Si alcanza para pagar esta deuda y deuda del cliente debe ser mayor a subtotal
@@ -109,10 +124,10 @@ struct CustomerContoller: RouteCollection {
             }
             SyncTimestamp.shared.updateLastSyncDate(to: .sale)
             SyncTimestamp.shared.updateLastSyncDate(to: .customer)
-            return PayCustomerDebt(
-                customerId: payCustomerDebt.customerId,
-                amount: payCustomerDebt.amount,
-                change: remainingMoney
+            return PayCustomerDebtResponse(
+                customerId: payCustomerDebtParameters.customerId,
+                change: remainingMoney,
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
             )
         } else {
             print("El cliente no existe")
@@ -140,10 +155,4 @@ struct CustomerContoller: RouteCollection {
             return false
         }
     }
-}
-
-struct PayCustomerDebt: Content {
-    let customerId: UUID
-    let amount: Int
-    let change: Int?
 }

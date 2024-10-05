@@ -20,7 +20,6 @@ public func configure(_ app: Application) async throws {
         database: Environment.get("DATABASE_NAME") ?? "FlorCloudBDv1",
         tls: .prefer(try .init(configuration: .clientDefault)))
     ), as: .psql)
-
     app.migrations.add(CreateCompany())
     app.migrations.add(CreateImageUrl())
     app.migrations.add(CreateSubsidiary())

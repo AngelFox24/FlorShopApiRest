@@ -60,4 +60,15 @@ final class SyncTimestamp {
             saleLastUpdate: self.lastSyncSale
         )
     }
+    func getLastSyncDateTemp(entity: SyncEntities) -> VerifySyncParameters {
+        return VerifySyncParameters(
+            imageLastUpdate: entity == .image ? UUID() : self.lastSyncImage,
+            companyLastUpdate: entity == .company ? UUID() : self.lastSyncCompany,
+            subsidiaryLastUpdate: entity == .subsidiary ? UUID() : self.lastSyncSubsidiary,
+            customerLastUpdate: entity == .customer ? UUID() : self.lastSyncCustomer,
+            productLastUpdate: entity == .product ? UUID() : self.lastSyncProduct,
+            employeeLastUpdate: entity == .employee ? UUID() : self.lastSyncEmployee,
+            saleLastUpdate: entity == .sale ? UUID() : self.lastSyncSale
+        )
+    }
 }

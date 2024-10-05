@@ -7,21 +7,28 @@ struct SubsidiaryController: RouteCollection {
         subsidiaries.post("sync", use: sync)
         subsidiaries.post(use: save)
     }
-    func sync(req: Request) async throws -> [SubsidiaryDTO] {
-        //Precicion de segundos solamente
-        //No se requiere mas precicion ya que el objetivo es sincronizar y en caso haya repetidos esto se mitiga en la app
+    func sync(req: Request) async throws -> SyncSubsidiariesResponse {
         let request = try req.content.decode(SyncFromCompanyParameters.self)
-        
+        let subisidiaryURLClientLastSyncId = request.syncIds.subsidiaryLastUpdate
+        let subisidiaryBackendLastSyncId = SyncTimestamp.shared.getLastSyncDate().subsidiaryLastUpdate
+        guard subisidiaryURLClientLastSyncId != subisidiaryBackendLastSyncId else {
+            return SyncSubsidiariesResponse(
+                subsidiariesDTOs: [],
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
+        }
+        let maxPerPage = 50
         let query = Subsidiary.query(on: req.db)
             .filter(\.$company.$id == request.companyId)
             .filter(\.$updatedAt >= request.updatedSince)
             .sort(\.$updatedAt, .ascending)
             .with(\.$imageUrl)
-            .limit(50)
-        
+            .limit(maxPerPage)
         let subsidiaries = try await query.all()
-        
-        return subsidiaries.mapToListSubsidiaryDTO()
+        return SyncSubsidiariesResponse(
+            subsidiariesDTOs: subsidiaries.mapToListSubsidiaryDTO(),
+            syncIds: subsidiaries.count == maxPerPage ? SyncTimestamp.shared.getLastSyncDateTemp(entity: .subsidiary) : SyncTimestamp.shared.getLastSyncDate()
+        )
     }
     func save(req: Request) async throws -> DefaultResponse {
         let subsidiaryDTO = try req.content.decode(SubsidiaryDTO.self)
@@ -43,9 +50,17 @@ struct SubsidiaryController: RouteCollection {
             if update {
                 try await subsidiary.update(on: req.db)
                 SyncTimestamp.shared.updateLastSyncDate(to: .subsidiary)
-                return DefaultResponse(code: 200, message: "Updated")
+                return DefaultResponse(
+                    code: 200,
+                    message: "Updated",
+                    syncIds: SyncTimestamp.shared.getLastSyncDate()
+                )
             } else {
-                return DefaultResponse(code: 200, message: "Not Updated")
+                return DefaultResponse(
+                    code: 200,
+                    message: "Not Updated",
+                    syncIds: SyncTimestamp.shared.getLastSyncDate()
+                )
             }
         } else {
             //Create
@@ -63,7 +78,11 @@ struct SubsidiaryController: RouteCollection {
             )
             try await subsidiaryNew.save(on: req.db)
             SyncTimestamp.shared.updateLastSyncDate(to: .subsidiary)
-            return DefaultResponse(code: 200, message: "Created")
+            return DefaultResponse(
+                code: 200,
+                message: "Created",
+                syncIds: SyncTimestamp.shared.getLastSyncDate()
+            )
         }
     }
     private func subsidiaryNameExist(subsidiaryDTO: SubsidiaryDTO, db: any Database) async throws -> Bool {
