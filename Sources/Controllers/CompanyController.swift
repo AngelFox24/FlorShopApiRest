@@ -1,9 +1,10 @@
+import Vapor
 import Fluent
 import FlorShopDTOs
-import Vapor
+import FlorShopAuthClient
+import FlorShopNetworking
 
 struct CompanyController: RouteCollection {
-    let validator: FlorShopAuthValitator
     let florShopAuthProvider: FlorShopAuthProvider
     func boot(routes: any RoutesBuilder) throws {
         let companies = routes.grouped("companies")
@@ -16,10 +17,10 @@ struct CompanyController: RouteCollection {
     }
     @Sendable
     func save(req: Request) async throws -> DefaultResponse {
-        guard let token = req.headers.bearerAuthorization?.token else {
-            throw Abort(.unauthorized, reason: "Manda el token mrda")
+        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
+            throw Abort(.unauthorized, reason: "Missing user token")
         }
-        let payload: ScopedTokenPayload = try await validator.verifyToken(token, client: req.client)
+        let payload = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
         let companyDTO = try req.content.decode(CompanyServerDTO.self).clean()
         try companyDTO.validate()
         let responseText: String
@@ -28,8 +29,7 @@ struct CompanyController: RouteCollection {
                 return DefaultResponse(message: "Not Updated, is equal")
             }
             //TODO: Segregate this in a function
-            let internalToken = try await TokenService.generateInternalToken(scopedToken: payload, req: req)
-            try await self.florShopAuthProvider.updateCompany(request: companyDTO, internalToken: internalToken)
+            try await self.florShopAuthProvider.updateCompany(request: companyDTO)
             company.companyName = companyDTO.companyName
             company.ruc = companyDTO.ruc
             try await company.update(on: req.db)

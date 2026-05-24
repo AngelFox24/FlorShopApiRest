@@ -12,7 +12,11 @@ extension Application {
         self.migrations.add(CreateEmployeeSubsidiary())
         self.migrations.add(CreateSale())
         self.migrations.add(CreateSaleDetail())
+        self.migrations.add(CreatePlan())
+        self.migrations.add(CreatePlanFeature())
+        self.migrations.add(CreateSuscription())
         // futuras migraciones aquí
         self.migrations.add(SetNotNullRoundingFields())
+        self.migrations.add(UpdateCompanyParams())
     }
 }

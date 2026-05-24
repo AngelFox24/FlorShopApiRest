@@ -1,9 +1,10 @@
+import Vapor
 import Fluent
 import FlorShopDTOs
-import Vapor
+import FlorShopAuthClient
+import FlorShopNetworking
 
 struct EmployeeController: RouteCollection {
-    let validator: FlorShopAuthValitator
     let florShopAuthProvider: FlorShopAuthProvider
     func boot(routes: any RoutesBuilder) throws {
         let employees = routes.grouped("employees")
@@ -11,13 +12,14 @@ struct EmployeeController: RouteCollection {
         let isComplete = employees.grouped("isComplete")
         isComplete.get(use: self.isProfileComplete)
     }
-    //GET: /employees/isComplete
+    //MARK: GET: /employees/isComplete
     @Sendable
     func isProfileComplete(req: Request) async throws -> CompleteRegistrationResponse {
-        guard let token = req.headers.bearerAuthorization?.token else {
-            throw Abort(.unauthorized, reason: "Manda el token mrda")
+        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
+            throw Abort(.unauthorized, reason: "Missing user token")
         }
-        let payload = try await validator.verifyToken(token, client: req.client)
+        let payload = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
+        print("[isProfileComplete] payload: \(payload)")
         let isRegistered: Bool
         let message: String
         if let _ = try await EmployeeSubsidiary.findEmployeeSubsidiary(employeeCic: payload.sub.value, subsisiaryCic: payload.subsidiaryCic, on: req.db) {
@@ -32,13 +34,18 @@ struct EmployeeController: RouteCollection {
             message: message
         )
     }
+    //MARK: POST /employee
     @Sendable
     func save(req: Request) async throws -> DefaultResponse {
-        guard let token = req.headers.bearerAuthorization?.token else {
-            throw Abort(.unauthorized, reason: "Manda el token mrda")
+        print("[EmployeeController] enter save")
+        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
+            throw Abort(.unauthorized, reason: "Missing user token")
         }
-        let payload = try await validator.verifyToken(token, client: req.client)
+        print("[EmployeeController] scopedToken: \(scopedTokenStr)")
+        let payload = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
+        print("[EmployeeController] autorization success")
         let employeeDTO = try req.content.decode(EmployeeServerDTO.self)
+        print("[EmployeeController] decode success")
         let responseString: String = try await req.db.transaction { transaction -> String in
             guard let subsidiaryEntity = try await Subsidiary.findSubsidiary(subsidiaryCic: payload.subsidiaryCic, on: transaction),
                   let subsidiaryId = subsidiaryEntity.id else {
@@ -73,9 +80,8 @@ struct EmployeeController: RouteCollection {
                 }
                 if !employeeDTO.isChildEqual(to: employeeSubsidiary) {
                     //TODO: Segregate this in a function
-                    let internalToken = try await TokenService.generateInternalToken(scopedToken: payload, req: req)
                     let request = UpdateUserSubsidiaryRequest(employeeCic: employee.employeeCic, role: employeeDTO.role, status: employeeDTO.active ? .active : .inactive)
-                    try await self.florShopAuthProvider.updateUserSubsidiary(request: request, internalToken: internalToken)
+                    try await self.florShopAuthProvider.updateUserSubsidiary(request: request)
                     employeeSubsidiary.role = employeeDTO.role
                     employeeSubsidiary.active = employeeDTO.active
                     try await employeeSubsidiary.update(on: transaction)

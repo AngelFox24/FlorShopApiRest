@@ -1,9 +1,10 @@
+import Vapor
 import Fluent
 import FlorShopDTOs
-import Vapor
+import FlorShopAuthClient
+import FlorShopNetworking
 
 struct CustomerContoller: RouteCollection {
-    let validator: FlorShopAuthValitator
     func boot(routes: any RoutesBuilder) throws {
         let customers = routes.grouped("customers")
         customers.post(use: self.save)
@@ -11,10 +12,10 @@ struct CustomerContoller: RouteCollection {
     }
     @Sendable
     func save(req: Request) async throws -> DefaultResponse {
-        guard let token = req.headers.bearerAuthorization?.token else {
-            throw Abort(.unauthorized, reason: "Manda el token mrda")
+        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
+            throw Abort(.unauthorized, reason: "Missing user token")
         }
-        let payload = try await validator.verifyToken(token, client: req.client)
+        let payload = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
         let customerDTO = try req.content.decode(CustomerServerDTO.self)
         let responseString: String = try await req.db.transaction { transaction -> String in
             if let customerCic = customerDTO.customerCic {//tiene la intencion de actualizar
@@ -83,10 +84,10 @@ struct CustomerContoller: RouteCollection {
     }
     @Sendable
     func payDebt(req: Request) async throws -> PayCustomerDebtClientDTO {
-        guard let token = req.headers.bearerAuthorization?.token else {
-            throw Abort(.unauthorized, reason: "Manda el token mrda")
+        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
+            throw Abort(.unauthorized, reason: "Missing user token")
         }
-        let payload = try await validator.verifyToken(token, client: req.client)
+        let _ = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
         let payCustomerDebtParameters = try req.content.decode(PayCustomerDebtServerDTO.self)
         guard let customer = try await Customer.findCustomer(customerCic: payCustomerDebtParameters.customerCic, on: req.db) else {
             throw Abort(.badRequest, reason: "El cliente no existe")

@@ -1,9 +1,10 @@
+import Vapor
 import Fluent
 import FlorShopDTOs
-import Vapor
+import FlorShopAuthClient
+import FlorShopNetworking
 
 struct ProductController: RouteCollection {
-    let validator: FlorShopAuthValitator
     func boot(routes: any RoutesBuilder) throws {
         let products = routes.grouped("products")
         products.post(use: self.save)
@@ -11,10 +12,10 @@ struct ProductController: RouteCollection {
     }
     @Sendable
     func save(req: Request) async throws -> DefaultResponse {
-        guard let token = req.headers.bearerAuthorization?.token else {
-            throw Abort(.unauthorized, reason: "Manda el scoped token mrda")
+        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
+            throw Abort(.unauthorized, reason: "Missing user token")
         }
-        let payload = try await validator.verifyToken(token, client: req.client)
+        let payload = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
         let productDTO = try req.content.decode(ProductServerDTO.self)
         guard productDTO.productName != "" else {
             throw Abort(.badRequest, reason: "El nombre del producto no puede ser vacio")

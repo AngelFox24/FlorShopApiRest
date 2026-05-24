@@ -1,9 +1,10 @@
-import Fluent
 import Vapor
+import Fluent
 import FlorShopDTOs
+import FlorShopAuthClient
+import FlorShopNetworking
 
 struct SessionController: RouteCollection {
-    let validator: FlorShopAuthValitator
     let authProvider: FlorShopAuthProvider
     func boot(routes: any RoutesBuilder) throws {
         let session = routes.grouped("session")
@@ -13,19 +14,25 @@ struct SessionController: RouteCollection {
     //POST: /session/register
     @Sendable
     func register(req: Request) async throws -> DefaultResponse {
-        guard let token = req.headers.bearerAuthorization?.token else {
-            throw Abort(.unauthorized, reason: "Manda el token mrda")
+        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
+            throw Abort(.unauthorized, reason: "Missing user token")
         }
-        let payload = try await validator.verifyToken(token, client: req.client)
+        let payload = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
         //Obtenemos los datos de FlorShopAuth
-        let internalToken = try await TokenService.generateInternalToken(scopedToken: payload, req: req)
-        let initialData = try await self.authProvider.getInitialData(subsidiaryCic: payload.subsidiaryCic, internalToken: internalToken)
+        let initialData = try await self.authProvider.getInitialData(subsidiaryCic: payload.subsidiaryCic)
         try await req.db.transaction { transaction in
+            guard try await !Subsidiary.subsidiaryExist(subsidiaryCic: initialData.subsidiary.subsidiaryCic, on: transaction) else {
+                return
+            }
+            guard try await !Company.companyExist(companyCic: initialData.company.companyCic, on: transaction) else {
+                return
+            }
+            print("[register] - Se han verificado que no existe la empresa y la subsidiaria")
             let companyCic = payload.companyCic
             let subsidiaryCic = payload.subsidiaryCic
-            let employeeCic = payload.sub.value
             //Registramos la compañia
             let newCompany = Company(
+                suscriptionID: nil,
                 companyCic: companyCic,
                 companyName: initialData.company.companyName,
                 ruc: initialData.company.ruc
@@ -43,9 +50,6 @@ struct SessionController: RouteCollection {
                 companyID: companyId
             )
             try await newSubsidiary.save(on: transaction)
-            guard let subsidiaryId = newSubsidiary.id else {
-                throw Abort(.internalServerError, reason: "subsidiaryId no pudo ser obtenido")
-            }
         }
         return DefaultResponse(code: 200, message: "ok")
     }

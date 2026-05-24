@@ -7,6 +7,7 @@ final class Company: Model, @unchecked Sendable {
     
     @ID(key: .id) var id: UUID?
     
+    @OptionalParent(key: "subscription_id") var subscription: Suscription?
     @Field(key: "company_cic") var companyCic: String
     @Field(key: "company_name") var companyName: String
     @Field(key: "ruc") var ruc: String
@@ -21,10 +22,12 @@ final class Company: Model, @unchecked Sendable {
     init() { }
     
     init(
+        suscriptionID: UUID?,
         companyCic: String,
         companyName: String,
         ruc: String
     ) {
+        self.$subscription.id = suscriptionID
         self.companyCic = companyCic
         self.companyName = companyName
         self.ruc = ruc
@@ -36,5 +39,10 @@ extension Company {
         try await Company.query(on: db)
             .filter(Company.self, \.$companyCic == companyCic)
             .first()
+    }
+    static func companyExist(companyCic: String, on db: any Database) async throws -> Bool {
+        ((try await Company.query(on: db)
+            .filter(Company.self, \.$companyCic == companyCic)
+            .first()) != nil)
     }
 }

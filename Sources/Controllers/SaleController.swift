@@ -1,6 +1,8 @@
+import Vapor
 import Fluent
 import FlorShopDTOs
-import Vapor
+import FlorShopAuthClient
+import FlorShopNetworking
 
 enum SaleError: Error {
     case alreadyExist
@@ -45,17 +47,16 @@ extension SaleDetailError: AbortError {
 }
 
 struct SaleController: RouteCollection {
-    let validator: FlorShopAuthValitator
     func boot(routes: any RoutesBuilder) throws {
         let sales = routes.grouped("sales")
         sales.post(use: self.save)
     }
     @Sendable
     func save(req: Request) async throws -> DefaultResponse {
-        guard let token = req.headers.bearerAuthorization?.token else {
-            throw Abort(.unauthorized, reason: "Manda el scoped token mrda")
+        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
+            throw Abort(.unauthorized, reason: "Missing user token")
         }
-        let payload = try await validator.verifyToken(token, client: req.client)
+        let payload = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
         let saleTransactionDTO = try req.content.decode(RegisterSaleParameters.self)
         let date: Date = Date()
         guard !saleTransactionDTO.cart.cartDetails.isEmpty else {

@@ -1,7 +1,9 @@
 import Foundation
 import FlorShopDTOs
+import FlorShopNetworking
 
 enum FlorShopAuthApiRequest {
+    case getInternalToken(request: InternalTokenRequest)
     case updateCompany(request: CompanyServerDTO, internalToken: String)
     case saveSubsidiary(request: RegisterSubsidiaryRequest, internalToken: String)
     case updateUserSubsidiary(request: UpdateUserSubsidiaryRequest, internalToken: String)
@@ -10,9 +12,11 @@ enum FlorShopAuthApiRequest {
 
 extension FlorShopAuthApiRequest: NetworkRequest {
     var url: URL? {
-        let baseUrl = AppConfig.florShopAuthBaseURL
+        let baseUrl = AppConfig.florShopAuthApiUrl
         let path: String
         switch self {
+        case .getInternalToken:
+            path = "/auth/service-token"
         case .updateCompany:
             path = "/company"
         case .saveSubsidiary:
@@ -27,11 +31,7 @@ extension FlorShopAuthApiRequest: NetworkRequest {
     
     var method: HTTPMethod {
         switch self {
-        case .updateCompany:
-                .post
-        case .saveSubsidiary:
-                .post
-        case .updateUserSubsidiary:
+        case .getInternalToken, .updateCompany, .saveSubsidiary, .updateUserSubsidiary:
                 .post
         case .getInitalData:
                 .get
@@ -41,6 +41,8 @@ extension FlorShopAuthApiRequest: NetworkRequest {
     var headers: [HTTPHeader : String]? {
         var headers: [HTTPHeader: String] = [:]
         switch self {
+        case .getInternalToken:
+            headers[.contentType] = ContentType.json.rawValue
         case .updateCompany(_, let internalToken):
             headers[.contentType] = ContentType.json.rawValue
             headers[.authorization] = "Bearer \(internalToken)"
@@ -59,6 +61,8 @@ extension FlorShopAuthApiRequest: NetworkRequest {
     
     var parameters: (any Encodable)? {
         switch self {
+        case .getInternalToken(let request):
+            return request
         case .updateCompany(let request, _):
             return request
         case .saveSubsidiary(let request, _):

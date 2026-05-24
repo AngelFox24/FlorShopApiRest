@@ -1,9 +1,10 @@
+import Vapor
 import Fluent
 import FlorShopDTOs
-import Vapor
+import FlorShopAuthClient
+import FlorShopNetworking
 
 struct SubsidiaryController: RouteCollection {
-    let validator: FlorShopAuthValitator
     let florShopAuthProvider: FlorShopAuthProvider
     func boot(routes: any RoutesBuilder) throws {
         let subsidiaries = routes.grouped("subsidiaries")
@@ -11,10 +12,10 @@ struct SubsidiaryController: RouteCollection {
     }
     @Sendable
     func save(req: Request) async throws -> DefaultResponse {
-        guard let token = req.headers.bearerAuthorization?.token else {
-            throw Abort(.unauthorized, reason: "Manda el token mrda")
+        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
+            throw Abort(.unauthorized, reason: "Missing user token")
         }
-        let payload = try await validator.verifyToken(token, client: req.client)
+        let payload = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
         let subsidiaryDTO = try req.content.decode(SubsidiaryServerDTO.self).clean()
         try self.validateInput(dto: subsidiaryDTO)
         let responseString: String = try await req.db.transaction { transaction -> String in
@@ -41,9 +42,8 @@ struct SubsidiaryController: RouteCollection {
                     throw Abort(.failedDependency, reason: "Empleado no encontrado para esta subsidiaria incluso teniendo el ScopedToken")
                 }
                 //TODO: First send a request a FlorShopAuth to update the name of company
-                let internalToken = try await TokenService.generateInternalToken(scopedToken: payload, req: req)
                 let request = RegisterSubsidiaryRequest(subsidiary: subsidiaryDTO, role: role)
-                try await self.florShopAuthProvider.saveSubsidiary(request: request, internalToken: internalToken)
+                try await self.florShopAuthProvider.saveSubsidiary(request: request)
                 subsidiary.name = subsidiaryDTO.name
                 subsidiary.imageUrl = subsidiaryDTO.imageUrl
                 try await subsidiary.update(on: transaction)
@@ -64,9 +64,8 @@ struct SubsidiaryController: RouteCollection {
                     throw Abort(.failedDependency, reason: "Empleado no encontrado para esta subsidiaria incluso teniendo el ScopedToken")
                 }
                 //TODO: First send a request a FlorShopAuth to update the name of company
-                let internalToken = try await TokenService.generateInternalToken(scopedToken: payload, req: req)
                 let request = RegisterSubsidiaryRequest(subsidiary: subsidiaryDTO, role: role)
-                try await self.florShopAuthProvider.saveSubsidiary(request: request, internalToken: internalToken)
+                try await self.florShopAuthProvider.saveSubsidiary(request: request)
                 let subsidiaryNew = Subsidiary(
                     subsidiaryCic: UUID().uuidString,
                     name: subsidiaryDTO.name,

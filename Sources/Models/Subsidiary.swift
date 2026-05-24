@@ -42,6 +42,11 @@ extension Subsidiary {
             .filter(Subsidiary.self, \.$subsidiaryCic == subsidiaryCic)
             .first()
     }
+    static func subsidiaryExist(subsidiaryCic: String, on db: any Database) async throws -> Bool {
+        ((try await Subsidiary.query(on: db)
+            .filter(Subsidiary.self, \.$subsidiaryCic == subsidiaryCic)
+            .first()) != nil)
+    }
     static func nameExist(name: String, on db: any Database) async throws -> Bool {
         if let _ = try await Subsidiary.query(on: db)
             .filter(Subsidiary.self, \.$name == name)

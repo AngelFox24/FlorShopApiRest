@@ -9,9 +9,11 @@ public func configure(_ app: Application) async throws {
     app.routes.defaultMaxBodySize = "10mb"
     app.configLogger()
     app.setJsonDecoder()
-    await app.setSignature()
     app.databases.use(try app.getFactory(), as: app.getDatabaseID())
+    await app.configNetworkLog()
+    app.addValkey()
     app.configureMigrations()
     try await app.autoMigrate()
     try await routes(app)
+    streams(app)
 }
