@@ -1,5 +1,5 @@
 {
-  "originHash" : "10f73637511892cf5a74dbaf82be2a3932daa059b0c41f134d27816e2d90d2ca",
+  "originHash" : "95e8cced7a9fe67293155d4ba0124c0943ab75b0a81b9866605c06c70a752c82",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AngelFox24/florshop-auth-client.git",
       "state" : {
-        "revision" : "936823f4b4a913baac8162f065555c2459ba546b",
-        "version" : "0.0.6"
+        "revision" : "fe0e5b9ee4308e773e86464186ad97412814059e",
+        "version" : "0.0.7"
       }
     },
     {
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AngelFox24/florshop-networking.git",
       "state" : {
-        "revision" : "e9cdad901787bef4f4fad7cdb3fa9c958130b525",
-        "version" : "0.0.6"
+        "revision" : "97b722a2bc5412895e939ef2486ff5cf86e380f4",
+        "version" : "0.0.7"
       }
     },
     {
@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AngelFox24/florshop-valkey.git",
       "state" : {
-        "revision" : "c72d94e2a8d969dc4ad577a864c6bb7a5ca951cc",
-        "version" : "0.0.6"
+        "revision" : "8aacd39be7e10cab61b0c4cde5f676b9b780cf5a",
+        "version" : "0.0.8"
       }
     },
     {
