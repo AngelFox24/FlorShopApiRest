@@ -17,10 +17,7 @@ struct CompanyController: RouteCollection {
     }
     @Sendable
     func save(req: Request) async throws -> DefaultResponse {
-        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
-            throw Abort(.unauthorized, reason: "Missing user token")
-        }
-        let payload = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
+        let payload = try await req.jwt.florshop.verifyScopedToken()
         let companyDTO = try req.content.decode(CompanyServerDTO.self).clean()
         try companyDTO.validate()
         let responseText: String

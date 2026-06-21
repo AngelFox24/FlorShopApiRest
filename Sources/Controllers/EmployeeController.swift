@@ -15,10 +15,7 @@ struct EmployeeController: RouteCollection {
     //MARK: GET: /employees/isComplete
     @Sendable
     func isProfileComplete(req: Request) async throws -> CompleteRegistrationResponse {
-        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
-            throw Abort(.unauthorized, reason: "Missing user token")
-        }
-        let payload = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
+        let payload = try await req.jwt.florshop.verifyScopedToken()
         print("[isProfileComplete] payload: \(payload)")
         let isRegistered: Bool
         let message: String
@@ -37,12 +34,7 @@ struct EmployeeController: RouteCollection {
     //MARK: POST /employee
     @Sendable
     func save(req: Request) async throws -> DefaultResponse {
-        print("[EmployeeController] enter save")
-        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
-            throw Abort(.unauthorized, reason: "Missing user token")
-        }
-        print("[EmployeeController] scopedToken: \(scopedTokenStr)")
-        let payload = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
+        let payload = try await req.jwt.florshop.verifyScopedToken()
         print("[EmployeeController] autorization success")
         let employeeDTO = try req.content.decode(EmployeeServerDTO.self)
         print("[EmployeeController] decode success")

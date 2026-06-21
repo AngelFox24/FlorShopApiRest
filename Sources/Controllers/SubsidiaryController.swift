@@ -12,10 +12,7 @@ struct SubsidiaryController: RouteCollection {
     }
     @Sendable
     func save(req: Request) async throws -> DefaultResponse {
-        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
-            throw Abort(.unauthorized, reason: "Missing user token")
-        }
-        let payload = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
+        let payload = try await req.jwt.florshop.verifyScopedToken()
         let subsidiaryDTO = try req.content.decode(SubsidiaryServerDTO.self).clean()
         try self.validateInput(dto: subsidiaryDTO)
         let responseString: String = try await req.db.transaction { transaction -> String in

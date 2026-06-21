@@ -11,13 +11,10 @@ struct SessionController: RouteCollection {
 //        session.post("logIn", use: self.logIn)
         session.post("register", use: self.register)
     }
-    //POST: /session/register
+    //MARK: POST: /session/register
     @Sendable
     func register(req: Request) async throws -> DefaultResponse {
-        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
-            throw Abort(.unauthorized, reason: "Missing user token")
-        }
-        let payload = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
+        let payload = try await req.jwt.florshop.verifyScopedToken()
         //Obtenemos los datos de FlorShopAuth
         let initialData = try await self.authProvider.getInitialData(subsidiaryCic: payload.subsidiaryCic)
         try await req.db.transaction { transaction in

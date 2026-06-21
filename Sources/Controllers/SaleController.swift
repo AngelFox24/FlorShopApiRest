@@ -53,10 +53,7 @@ struct SaleController: RouteCollection {
     }
     @Sendable
     func save(req: Request) async throws -> DefaultResponse {
-        guard let scopedTokenStr = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
-            throw Abort(.unauthorized, reason: "Missing user token")
-        }
-        let payload = try await req.jwt.florshop.verifyScopedToken(scopedTokenStr)
+        let payload = try await req.jwt.florshop.verifyScopedToken()
         let saleTransactionDTO = try req.content.decode(RegisterSaleParameters.self)
         let date: Date = Date()
         guard !saleTransactionDTO.cart.cartDetails.isEmpty else {

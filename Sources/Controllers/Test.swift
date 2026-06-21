@@ -10,10 +10,7 @@ struct Test: RouteCollection {
     }
     @Sendable
     func test(req: Request) async throws -> Response {
-        guard let scopedToken = req.headers.first(name: HTTPHeader.scopedToken.rawValue) else {
-            throw Abort(.unauthorized, reason: "Missing user token")
-        }
-        let payload = try await req.jwt.florshop.verifyScopedToken(scopedToken)
+        let payload = try await req.jwt.florshop.verifyScopedToken()
         print("✅ Token válido para \(payload.companyCic), userCic: \(payload.sub.value)")
         return Response(status: .ok, body: .init(stringLiteral: "✅ Token válido para \(payload.companyCic), userCic: \(payload.sub.value)"))
     }
